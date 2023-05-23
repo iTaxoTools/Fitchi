@@ -2113,24 +2113,24 @@ class XMultipleSeqAlignment(MultipleSeqAlignment):
             allele_frequencies = [0, 0, 0, 0]
             for y in range(0,len(self)):
                 if pops == []:
-                    if self[y].seq[x] is 'A':
+                    if self[y].seq[x] == 'A':
                         allele_frequencies[0] += 1
-                    elif self[y].seq[x] is 'C':
+                    elif self[y].seq[x] == 'C':
                         allele_frequencies[1] += 1
-                    elif self[y].seq[x] is 'G':
+                    elif self[y].seq[x] == 'G':
                         allele_frequencies[2] += 1
-                    elif self[y].seq[x] is 'T':
+                    elif self[y].seq[x] == 'T':
                         allele_frequencies[3] += 1
                 else:
                     for pop in pops:
                         if pop in self[y].id:
-                            if self[y].seq[x] is 'A':
+                            if self[y].seq[x] == 'A':
                                 allele_frequencies[0] += 1
-                            elif self[y].seq[x] is 'C':
+                            elif self[y].seq[x] == 'C':
                                 allele_frequencies[1] += 1
-                            elif self[y].seq[x] is 'G':
+                            elif self[y].seq[x] == 'G':
                                 allele_frequencies[2] += 1
-                            elif self[y].seq[x] is 'T':
+                            elif self[y].seq[x] == 'T':
                                 allele_frequencies[3] += 1
             return allele_frequencies
 
@@ -2218,7 +2218,7 @@ class XMultipleSeqAlignment(MultipleSeqAlignment):
             all_allele_frequencies = self.get_allele_frequencies(x, pops)
             two_allele_frequencies = []
             for all_allele_frequency in all_allele_frequencies:
-                if all_allele_frequency is not 0:
+                if all_allele_frequency != 0:
                     two_allele_frequencies.append(all_allele_frequency)
             if len(two_allele_frequencies) == 0:
                 return 0
@@ -2671,7 +2671,7 @@ def run():
                 if "interleave" in clean_line.lower():
                     print("ERROR: Could not parse the alignment (should be sequential nexus format, but the format specification says that it is interleaved)!")
                     sys.exit(1)
-            elif in_matrix and clean_line is not '':
+            elif in_matrix and clean_line != '':
                 line_ary = clean_line.split()
                 if len(line_ary) == 1:
                     print("ERROR: Could not parse the alignment (should be sequential nexus format, but looks like it is interleaved)!")
@@ -2698,7 +2698,7 @@ def run():
                 in_tree = True
             elif line.strip().lower() == 'end;':
                 in_tree = False
-            elif in_tree and line.strip() is not '':
+            elif in_tree and line.strip() != '':
                 tree_string_raw = line
                 tree_patterns = re.search('\(.+\)',tree_string_raw)
                 tree_string = tree_patterns.group(0)
