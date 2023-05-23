@@ -35,6 +35,7 @@ from scipy import special
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Align import MultipleSeqAlignment
+from typing import TextIO
 
 ######################### networkx 2.0 Graph class source below #########################
 #
@@ -2467,7 +2468,78 @@ class XMultipleSeqAlignment(MultipleSeqAlignment):
             return d_f
 
 
-def run():
+class Configuration:
+    def __init__(self):
+        self.infile: TextIO = None
+        self.outfile: TextIO = None
+        self.window_start_pos: int = None
+        self.window_end_pos: int = None
+        self.minimum_edge_length: int = None
+        self.minimum_node_size: int = None
+        self.optimize_radius_multiplier: bool = None
+        self.radius_multiplier: float = None
+        self.seed: int = None
+        self.transversions_only: bool = None
+        self.haploid: bool = None
+        self.pops: list[str] = None
+        self.colors: list[str] = None
+        self.rest_color: str = None
+
+
+def get_colors(count: int) -> list[str]:
+    # Define a color scheme.
+    # Colors use the Solarized color scheme of http://ethanschoonover.com/solarized.
+
+    colors = []
+    if count == 1:
+        # base01
+        colors = ['586e75']
+    elif count == 2:
+        # red, cyan
+        colors = ['dc322f', '2aa198']
+    elif count == 3:
+        # red, cyan, violet
+        colors = ['dc322f', '2aa198', '6c71c4']
+    elif count == 4:
+        # red, cyan, violet, yellow
+        colors = ['dc322f', '2aa198', '6c71c4', 'b58900']
+    elif count == 5:
+        # red, cyan, violet, yellow, green
+        colors = ['dc322f', '2aa198', '6c71c4', 'b58900', '859900']
+    elif count == 6:
+        # red, cyan, violet, yellow, green, magenta
+        colors = ['dc322f', '2aa198', '6c71c4', 'b58900', '859900', 'd33682']
+    elif count == 7:
+        # red, cyan, violet, yellow, green, magenta, blue
+        colors = ['dc322f', '2aa198', '6c71c4', 'b58900', '859900', 'd33682', '268bd2']
+    elif count == 8:
+        # yellow, green, cyan, blue, violet, magenta, red, orange
+        colors = ['859900', 'b58900', '2aa198', '268bd2', '6c71c4', 'd33682', 'dc322f', 'cb4b16']
+    elif count == 9:
+        # yellow, green, cyan, blue, violet, magenta, red, orange, base03
+        colors = ['859900', 'b58900', '2aa198', '268bd2', '6c71c4', 'd33682', 'dc322f', 'cb4b16', '002b36']
+    elif count == 10:
+        # yellow, green, cyan, blue, violet, magenta, red, orange, base03, base0
+        colors = ['859900', 'b58900', '2aa198', '268bd2', '6c71c4', 'd33682', 'dc322f', 'cb4b16', '002b36', '839496']
+    elif count == 11:
+        # yellow, green, cyan, blue, violet, magenta, red, orange, base03, base00, base2
+        colors = ['859900', 'b58900', '2aa198', '268bd2', '6c71c4', 'd33682', 'dc322f', 'cb4b16', '002b36', '657b83', 'c6c6bc']
+    elif count == 12:
+        # yellow, green, cyan, blue, violet, magenta, red, orange, base03, base01, base0, base2
+        colors = ['859900', 'b58900', '2aa198', '268bd2', '6c71c4', 'd33682', 'dc322f', 'cb4b16', '002b36', '586e75', '839496', 'c6c6bc']
+    elif count == 13:
+        # yellow, green, cyan, blue, violet, magenta, red, orange, base03, base01, base0, base0base2_mix1, base2
+        colors = ['859900', 'b58900', '2aa198', '268bd2', '6c71c4', 'd33682', 'dc322f', 'cb4b16', '002b36', '586e75', '839496', 'b5bab3', 'c6c6bc']
+    elif count > 13:
+        # yellow, green, cyan, blue, violet, magenta, red, orange, base03, base01, base0, base0base2_mix2, base0base2_mix3
+        colors = ['859900', 'b58900', '2aa198', '268bd2', '6c71c4', 'd33682', 'dc322f', 'cb4b16', '002b36', '586e75', '839496', 'a2aca8', 'c6c6bc']
+    # base2
+    rest_color = 'eee8d5'
+
+    return colors, rest_color
+
+
+def parse_arguments() -> Configuration:
     # Parse the command line arguments.
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -2550,113 +2622,70 @@ def run():
         )
     parser.add_argument(
         'infile',
-        nargs='?',
+        # nargs='?',
         type=argparse.FileType('r'),
         default='-',
         help='The input file name.')
     parser.add_argument(
-        'outfile', nargs='?',
+        'outfile',
+        nargs='?',
         type=argparse.FileType('w'),
         default=sys.stdout,
         help='The output file name.')
     args = parser.parse_args()
-    infile = args.infile
-    outfile = args.outfile
-    window_start_pos = args.start[0]-1
-    window_end_pos = args.end[-1]
-    minimum_edge_length = args.min_edge_length[0]
-    minimum_node_size = args.min_node_size[0]
+
+    config = Configuration()
+
+    config.infile = args.infile
+    config.outfile = args.outfile
+    config.minimum_edge_length = args.min_edge_length[0]
+    config.minimum_node_size = args.min_node_size[0]
+    config.transversions_only = args.transversions_only
+    config.haploid = args.haploid
+
+    config.pops = args.populations if args.populations is not None else []
+    config.colors, config.rest_color = get_colors(len(config.pops))
+
     radius_multiplier_raw = args.radius_multiplier[0]
     if radius_multiplier_raw.lower() == "auto":
-        optimize_radius_multiplier = True
-        radius_multiplier = 10.0
+        config.optimize_radius_multiplier = True
+        config.radius_multiplier = 10.0
     else:
         try:
             radius_multiplier = float(radius_multiplier_raw)
         except ValueError:
-            print("ERROR: The radius multiplier must be either 'auto' or a number!")
-            sys.exit(1)
-        optimize_radius_multiplier = False
+            raise Exception("The radius multiplier must be either 'auto' or a number!")
         if radius_multiplier <= 0 or radius_multiplier == float("inf"):
-            print("ERROR: The radius multiplier must be either 'auto' or a number greater than 0!")
-            sys.exit(1)
-    seed = args.seed[0]
-    transversions_only = args.transversions_only
-    haploid = args.haploid
+            raise Exception("The radius multiplier must be either 'auto' or a number greater than 0!")
+        config.radius_multiplier = radius_multiplier
+        config.optimize_radius_multiplier = False
 
     # Initialize the random number generator if a seed value has been provided.
+    seed = args.seed[0]
     if seed == -1:
         seed = random.randint(0, 99999)
-    random.seed(seed)
+    config.seed = seed
 
     # Make sure sensible values are specified for the window start and end.
-    if window_start_pos < 0:
-        print("ERROR: The start position of the analysis window must be at least 1!")
-        sys.exit(1)
-    elif window_end_pos != -1:
-        if window_end_pos <= window_start_pos:
-            print("ERROR: The end position of the analysis window must be greater than the start position!")
-            sys.exit(1)
-    pops = args.populations
-    if infile.isatty():
-        print("No input file specified, and no input piped through stdin!")
-        print("Use '-h' to see available options.")
-        sys.exit(1)
+    config.window_start_pos = args.start[0]-1
+    config.window_end_pos = args.end[-1]
+    if config.window_start_pos < 0:
+        raise Exception("The start position of the analysis window must be at least 1!")
+    elif config.window_end_pos != -1:
+        if config.window_end_pos <= config.window_start_pos:
+            raise Exception("The end position of the analysis window must be greater than the start position!")
 
-    # Define a color scheme.
-    # Colors use the Solarized color scheme of http://ethanschoonover.com/solarized.
-    if pops == None:
-        pops = []
-    colors = []
-    if len(pops) == 1:
-        # base01
-        colors = ['586e75']
-    elif len(pops) == 2:
-        # red, cyan
-        colors = ['dc322f', '2aa198']
-    elif len(pops) == 3:
-        # red, cyan, violet
-        colors = ['dc322f', '2aa198', '6c71c4']
-    elif len(pops) == 4:
-        # red, cyan, violet, yellow
-        colors = ['dc322f', '2aa198', '6c71c4', 'b58900']
-    elif len(pops) == 5:
-        # red, cyan, violet, yellow, green
-        colors = ['dc322f', '2aa198', '6c71c4', 'b58900', '859900']
-    elif len(pops) == 6:
-        # red, cyan, violet, yellow, green, magenta
-        colors = ['dc322f', '2aa198', '6c71c4', 'b58900', '859900', 'd33682']
-    elif len(pops) == 7:
-        # red, cyan, violet, yellow, green, magenta, blue
-        colors = ['dc322f', '2aa198', '6c71c4', 'b58900', '859900', 'd33682', '268bd2']
-    elif len(pops) == 8:
-        # yellow, green, cyan, blue, violet, magenta, red, orange
-        colors = ['859900', 'b58900', '2aa198', '268bd2', '6c71c4', 'd33682', 'dc322f', 'cb4b16']
-    elif len(pops) == 9:
-        # yellow, green, cyan, blue, violet, magenta, red, orange, base03
-        colors = ['859900', 'b58900', '2aa198', '268bd2', '6c71c4', 'd33682', 'dc322f', 'cb4b16', '002b36']
-    elif len(pops) == 10:
-        # yellow, green, cyan, blue, violet, magenta, red, orange, base03, base0
-        colors = ['859900', 'b58900', '2aa198', '268bd2', '6c71c4', 'd33682', 'dc322f', 'cb4b16', '002b36', '839496']
-    elif len(pops) == 11:
-        # yellow, green, cyan, blue, violet, magenta, red, orange, base03, base00, base2
-        colors = ['859900', 'b58900', '2aa198', '268bd2', '6c71c4', 'd33682', 'dc322f', 'cb4b16', '002b36', '657b83', 'c6c6bc']
-    elif len(pops) == 12:
-        # yellow, green, cyan, blue, violet, magenta, red, orange, base03, base01, base0, base2
-        colors = ['859900', 'b58900', '2aa198', '268bd2', '6c71c4', 'd33682', 'dc322f', 'cb4b16', '002b36', '586e75', '839496', 'c6c6bc']
-    elif len(pops) == 13:
-        # yellow, green, cyan, blue, violet, magenta, red, orange, base03, base01, base0, base0base2_mix1, base2
-        colors = ['859900', 'b58900', '2aa198', '268bd2', '6c71c4', 'd33682', 'dc322f', 'cb4b16', '002b36', '586e75', '839496', 'b5bab3', 'c6c6bc']
-    elif len(pops) > 13:
-        # yellow, green, cyan, blue, violet, magenta, red, orange, base03, base01, base0, base0base2_mix2, base0base2_mix3
-        colors = ['859900', 'b58900', '2aa198', '268bd2', '6c71c4', 'd33682', 'dc322f', 'cb4b16', '002b36', '586e75', '839496', 'a2aca8', 'c6c6bc']
-    # base2
-    rest_color = 'eee8d5'
+    return config
+
+
+def run():
+    config = parse_arguments()
+    random.seed(config.seed)
 
     # Parse the input.
     align = None
     tree = None
-    inlines = infile.readlines()
+    inlines = config.infile.readlines()
     if inlines[0][0:6].lower() == '#nexus':
         # Assume the input is in nexus format. Maximally one tree string is read.
         in_matrix = False
@@ -2699,10 +2728,10 @@ def run():
                 if hit == None:
                     print("ERROR: Taxon labels should include only 'A'-'Z', 'a'-'z', '0'-'9', '.', _', and '-'! Offending taxon label: " + line_ary[0] + ".")
                     sys.exit(1)
-                if window_end_pos == -1:
-                    seq_string = seq_string[window_start_pos:]
+                if config.window_end_pos == -1:
+                    seq_string = seq_string[config.window_start_pos:]
                 else:
-                    seq_string = seq_string[window_start_pos:window_end_pos]
+                    seq_string = seq_string[config.window_start_pos:config.window_end_pos]
                 records.append(
                     SeqRecord(
                         Seq(seq_string),
@@ -2725,7 +2754,7 @@ def run():
                     sys.exit(0)
 
         align = XMultipleSeqAlignment(records)
-        if haploid:
+        if config.haploid:
             align.set_is_haploid(True)
         else:
             align.set_is_haploid(False)
@@ -2734,7 +2763,7 @@ def run():
         sys.exit(1)
 
     # Parse the newick tree string.
-    tree.parse_newick_string(pops)
+    tree.parse_newick_string(config.pops)
 
     # Assign sequences to terminal nodes.
     nodes = tree.get_nodes()
@@ -2759,37 +2788,37 @@ def run():
     tree.reconstruct_ancestral_sequences()
 
     # Calculate Fitch distances.
-    tree.calculate_fitch_distances(transversions_only)
+    tree.calculate_fitch_distances(config.transversions_only)
 
     # Find the extant progeny for each edge.
     tree.assign_progeny_ids()
 
     # Calculate gsi values before the tree is reduced.
     gsis = []
-    for pop in pops:
+    for pop in config.pops:
         gsis.append(tree.get_gsi(pop))
 
     # Reduce the tree.
-    tree.reduce(minimum_edge_length, minimum_node_size)
+    tree.reduce(config.minimum_edge_length, config.minimum_node_size)
 
     # Position the tree.
-    tree.position('neato', minimum_node_size, radius_multiplier)
-    if optimize_radius_multiplier:
-        overlap = tree.get_overlap(minimum_node_size, radius_multiplier)
+    tree.position('neato', config.minimum_node_size, config.radius_multiplier)
+    if config.optimize_radius_multiplier:
+        overlap = tree.get_overlap(config.minimum_node_size, config.radius_multiplier)
         while overlap > 0:
-            radius_multiplier = radius_multiplier * 0.9
-            tree.position('neato', minimum_node_size, radius_multiplier)
-            overlap = tree.get_overlap(minimum_node_size, radius_multiplier)
-            if radius_multiplier < 0.001:
+            config.radius_multiplier = config.radius_multiplier * 0.9
+            tree.position('neato', config.minimum_node_size, config.radius_multiplier)
+            overlap = tree.get_overlap(config.minimum_node_size, config.radius_multiplier)
+            if config.radius_multiplier < 0.001:
                 print("ERROR: No suitable radius multiplier could be found automatically.")
                 print("  Try manually setting a value for the radius multiplier.")
                 sys.exit(1)
-        radius_multiplier = radius_multiplier * 0.75
-        tree.position('neato', minimum_node_size, radius_multiplier)
-        overlap = tree.get_overlap(minimum_node_size, radius_multiplier)
+        config.radius_multiplier = config.radius_multiplier * 0.75
+        tree.position('neato', config.minimum_node_size, config.radius_multiplier)
+        overlap = tree.get_overlap(config.minimum_node_size, config.radius_multiplier)
 
     # Produce the svg tree string.
-    svg_string = tree.to_svg(840, 700, 10, minimum_node_size, radius_multiplier, colors, rest_color, pops)
+    svg_string = tree.to_svg(840, 700, 10, config.minimum_node_size, config.radius_multiplier, config.colors, config.rest_color, config.pops)
 
     def create_html_string():
         # Initiate the html output string.
@@ -2908,30 +2937,30 @@ def run():
         html_string += '            <table width="840" border="0" cellpadding="0" cellspacing="1">\n'
         html_string += '              <tr>\n'
         html_string += '                <td width="160" style="font-weight:bold">File Name</td>\n'
-        if infile.name == '<stdin>':
+        if config.infile.name == '<stdin>':
             html_string += '                <td>STDIN</td>\n'
         else:
-            html_string += '                <td>' + str(infile.name) + '</td>\n'
+            html_string += '                <td>' + str(config.infile.name) + '</td>\n'
         html_string += '              </tr>\n'
         html_string += '              <tr>\n'
         html_string += '                <td width="160" style="font-weight:bold"># Sites</td>\n'
         html_string += '                <td>' + str(align.get_alignment_length())
-        if window_start_pos != 0 or window_end_pos != -1:
+        if config.window_start_pos != 0 or config.window_end_pos != -1:
             html_string += ' (positions '
-            html_string += str(window_start_pos+1) + '-'
-            if window_end_pos == -1:
-                html_string += str(align.get_alignment_length()+window_start_pos)
+            html_string += str(config.window_start_pos+1) + '-'
+            if config.window_end_pos == -1:
+                html_string += str(align.get_alignment_length()+config.window_start_pos)
             else:
-                html_string += str(window_end_pos)
+                html_string += str(config.window_end_pos)
             html_string += ')'
         html_string += '</td>\n'
         html_string += '              </tr>\n'
         html_string += '              <tr>\n'
         html_string += '                <td width="160" style="font-weight:bold"># Sequence records</td>\n'
         html_string += '                <td>' + str(align.get_number_of_records())
-        if pops != []:
+        if config.pops != []:
             pop_string = ' ('
-            for pop in pops:
+            for pop in config.pops:
                 pop_string += str(align.get_number_of_records(pop)) + ' x ' + pop + ', '
             pop_string = pop_string[:-2]
             html_string += pop_string + ')'
@@ -2955,7 +2984,7 @@ def run():
         html_string += '              </tr>\n'
         html_string += '              <tr>\n'
         html_string += '                <td width="160" style="font-weight:bold">Edge length</td>\n'
-        if transversions_only:
+        if config.transversions_only:
             html_string += '                <td># transversions</td>\n'
         else:
             html_string += '                <td># substitutions (transitions or transversions)</td>\n'
@@ -2964,18 +2993,18 @@ def run():
 
         html_string += '              <tr>\n'
         html_string += '                <td width="160" style="font-weight:bold">Minimum node size</td>\n'
-        html_string += '                <td>' + str(minimum_node_size) + ' sequence record'
-        if minimum_node_size > 1:
+        html_string += '                <td>' + str(config.minimum_node_size) + ' sequence record'
+        if config.minimum_node_size > 1:
             html_string += 's'
         html_string += '</td>\n'
         html_string += '              </tr>\n'
         html_string += '              <tr>\n'
         html_string += '                <td width="160" style="font-weight:bold">Minimum edge length</td>\n'
-        if transversions_only:
-            html_string += '                <td>' + str(minimum_edge_length) + ' transversion'
+        if config.transversions_only:
+            html_string += '                <td>' + str(config.minimum_edge_length) + ' transversion'
         else:
-            html_string += '                <td>' + str(minimum_edge_length) + ' substitution'
-        if minimum_edge_length > 1:
+            html_string += '                <td>' + str(config.minimum_edge_length) + ' substitution'
+        if config.minimum_edge_length > 1:
             html_string += 's'
         html_string += '</td>\n'
         html_string += '              </tr>\n'
@@ -2993,14 +3022,14 @@ def run():
         total_fitch_distance = 0
         for edge in tree.get_edges():
             total_fitch_distance += edge.get_fitch_distance()
-        if transversions_only:
+        if config.transversions_only:
             html_string += str(total_fitch_distance) + ' transversions</td>\n'
         else:
             html_string += str(total_fitch_distance) + ' substitutions</td>\n'
         html_string += '              </tr>\n'
         html_string += '              <tr>\n'
         html_string += '                <td width="160" style="font-weight:bold">Random number seed</td>\n'
-        html_string += '                <td>' + str(seed) + '</td>\n'
+        html_string += '                <td>' + str(config.seed) + '</td>\n'
         html_string += '              </tr>\n'
         html_string += '            </table>\n'
         html_string += '          </td>\n'
@@ -3027,7 +3056,7 @@ def run():
         html_string += '          <td align="center">\n'
         html_string += '            <span id="legend" style="display:none;">\n'
         html_string += '              <div style="border-width:1px; border-style:solid; border-color:#000000;">\n'
-        if pops != []:
+        if config.pops != []:
             html_string += '                <table width="800" cellpadding="0" cellspacing="1">\n'
             html_string += '                  <tr class="spaceOver">\n'
             html_string += '                    <td width="160" style="font-weight:bold; font-family:Courier">Population</td>\n'
@@ -3036,13 +3065,13 @@ def run():
             html_string += '                    <td width="240" style="font-weight:bold; font-family:Courier">% Presence in non-empty nodes</td>\n'
             html_string += '                  </tr>\n'
             pop_count = 0
-            for pop in pops:
+            for pop in config.pops:
                 html_string += '                  <tr>\n'
                 html_string += '                    <td width="160" style="font-family:Courier">' + pop + '</td>\n'
-                if pop_count >= len(colors):
-                    html_string += '                    <td width="40" bgcolor="#' + rest_color + '"></td>\n'
+                if pop_count >= len(config.colors):
+                    html_string += '                    <td width="40" bgcolor="#' + config.rest_color + '"></td>\n'
                 else:
-                    html_string += '                    <td width="40" bgcolor="#' + colors[pop_count] + '"></td>\n'
+                    html_string += '                    <td width="40" bgcolor="#' + config.colors[pop_count] + '"></td>\n'
                 html_string += '                    <td width="60"></td>\n'
                 node_count_with_pop = 0
                 non_empty_node_count = 0
@@ -3097,13 +3126,13 @@ def run():
             html_string += '                    <td style="font-family:Courier">' + str(node.get_size()) + ' sequence record'
             if node.get_size() > 1:
                 html_string += 's'
-            if node.get_size() > 0 and pops != []:
+            if node.get_size() > 0 and config.pops != []:
                 per_pop_sizes = node.get_per_pop_sizes()
                 html_string += ' ('
                 pops_string = ''
-                for x in range(len(pops)):
+                for x in range(len(config.pops)):
                     if per_pop_sizes[x] > 0:
-                        pops_string += str(per_pop_sizes[x]) + ' x ' + pops[x] + ', '
+                        pops_string += str(per_pop_sizes[x]) + ' x ' + config.pops[x] + ', '
                 pops_string = pops_string[:-2]
                 html_string += pops_string
                 html_string += ')'
@@ -3160,8 +3189,8 @@ def run():
         html_string += '                <td width="168">' + "{0:.4f}".format(align.get_pi()) + '</td>\n'
         html_string += '                <!-- Pi: string end -->\n'
         html_string += '              </tr>\n'
-        if pops != None:
-            for pop in pops:
+        if config.pops != None:
+            for pop in config.pops:
                 html_string += '              <tr>\n'
                 html_string += '                <td width="168" style="font-weight:bold">' + pop + '</td>\n'
                 html_string += '                <td width="168">' + str(align.get_number_of_variable_sites([pop])) + '</td>\n'
@@ -3174,7 +3203,7 @@ def run():
         html_string += '        </tr>\n'
 
         # The between population differentiation section.
-        if pops != None and len(pops) > 1:
+        if config.pops != None and len(config.pops) > 1:
             html_string += '        <tr class="smallSpaceUnder">\n'
             html_string += '          <td style="font-size:30px; font-weight:bold">Between-population differentiation</td>\n'
             html_string += '        </tr>\n'
@@ -3188,12 +3217,12 @@ def run():
             html_string += '                <td width="168" style="font-weight:bold"><a href="http://onlinelibrary.wiley.com/doi/10.1111/mec.12842/abstract" data-toggle="tooltip" data-html="true" title="between-species average number of pairwise differences<br/>(see Ruegg et al. 2014)">d<sub>XY</sub>&nbsp;&nbsp;</a></td>\n'
             html_string += '                <td width="168" style="font-weight:bold"><a href="http://onlinelibrary.wiley.com/doi/10.1111/mec.12842/abstract" data-toggle="tooltip" data-html="true" title="density of fixed differences<br/>per base pair<br/>(see Ruegg et al. 2014)">d<sub>f</sub>&nbsp;&nbsp;</a></td>\n'
             html_string += '              </tr>\n'
-            for x in range(0,len(pops)-1):
-                for y in range(x+1,len(pops)):
+            for x in range(0,len(config.pops)-1):
+                for y in range(x+1,len(config.pops)):
                     html_string += '              <tr>\n'
-                    html_string += '                <td width="168" style="font-weight:bold">' + pops[x] + '</td>\n'
-                    html_string += '                <td width="168" style="font-weight:bold">' + pops[y] + '</td>\n'
-                    f_st = align.get_F_st([pops[x], pops[y]])
+                    html_string += '                <td width="168" style="font-weight:bold">' + config.pops[x] + '</td>\n'
+                    html_string += '                <td width="168" style="font-weight:bold">' + config.pops[y] + '</td>\n'
+                    f_st = align.get_F_st([config.pops[x], config.pops[y]])
                     if x == 0 and y == 1:
                         html_string += '                <!-- First f_st: string start -->\n'
                     if f_st is None:
@@ -3202,7 +3231,7 @@ def run():
                         html_string += '                <td width="168">' + "{0:.4f}".format(f_st) + '</td>\n'
                     if x == 0 and y == 1:
                         html_string += '                <!-- First f_st: string end -->\n'
-                    d_xy = align.get_d_xy([pops[x], pops[y]])
+                    d_xy = align.get_d_xy([config.pops[x], config.pops[y]])
                     if x == 0 and y == 1:
                         html_string += '                <!-- First d_xy: string start -->\n'
                     if d_xy is None:
@@ -3211,7 +3240,7 @@ def run():
                         html_string += '                <td width="168">' + "{0:.4f}".format(d_xy) + '</td>\n'
                     if x == 0 and y == 1:
                         html_string += '                <!-- First d_xy: string end -->\n'
-                    d_f = align.get_d_f([pops[x], pops[y]])
+                    d_f = align.get_d_f([config.pops[x], config.pops[y]])
                     if x == 0 and y == 1:
                         html_string += '                <!-- First d_f: string start -->\n'
                     if d_f is None:
@@ -3226,7 +3255,7 @@ def run():
             html_string += '        </tr>\n'
 
         # The genealogical sorting index section.
-        if len(pops) > 0:
+        if len(config.pops) > 0:
             html_string += '        <tr class="smallSpaceUnder">\n'
             html_string += '          <td style="font-size:30px; font-weight:bold">Genealogical sorting index</td>\n'
             html_string += '        </tr>\n'
@@ -3237,9 +3266,9 @@ def run():
             html_string += '                <td width="168" style="font-weight:bold">Population</td>\n'
             html_string += '                <td width="672" style="font-weight:bold"><a href="http://onlinelibrary.wiley.com/doi/10.1111/j.1558-5646.2008.00442.x/abstract" data-toggle="tooltip" data-html="true" title="genealogical sorting index<br/>(Cummings et al. 2008)">gsi&nbsp;&nbsp;</a></td>\n'
             html_string += '              </tr>\n'
-            for x in range(0,len(pops)):
+            for x in range(0,len(config.pops)):
                 html_string += '              <tr>\n'
-                html_string += '                <td width="168" style="font-weight:bold">' + pops[x] + '</td>\n'
+                html_string += '                <td width="168" style="font-weight:bold">' + config.pops[x] + '</td>\n'
                 if x == 0:
                     html_string += '                <!-- First gsi: string start -->\n'
                 elif x == 1:
@@ -3270,4 +3299,4 @@ def run():
     html_string = create_html_string()
 
     # Write the html string to STDOUT.
-    outfile.write(html_string)
+    config.outfile.write(html_string)
