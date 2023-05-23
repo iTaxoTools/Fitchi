@@ -282,9 +282,8 @@ class Tree(object):
             node.set_size(0)
             self.nodes.append(node)
         else:
-            print('ERROR: The newick tree string could not be parsed! This can happen when the tree contains multiple true polytomies (not just zero-length branches of bi-furcating nodes)')
-            print(self.newick_string)
-            sys.exit(1)
+            print(self.newick_string, file=sys.stderr)
+            raise Exception('The newick tree string could not be parsed! This can happen when the tree contains multiple true polytomies (not just zero-length branches of bi-furcating nodes)')
 
         # for node in self.nodes:
         #     print(node.info())
@@ -298,8 +297,7 @@ class Tree(object):
                     parent.add_child_id(node.get_id())
                     parent_found = True
             if node.get_is_root() == False and parent_found == False:
-                print("ERROR: The parent of node " + node.id + " named " + node.get_parent_id() + " could not be found!")
-                sys.exit(1)
+                raise Exception("The parent of node " + node.id + " named " + node.get_parent_id() + " could not be found!")
 
         # Calculate the distances to the root for each node.
         self.set_node_distances_to_root()
@@ -313,8 +311,7 @@ class Tree(object):
             if node.get_is_root():
                 there_is_a_root = True
         if there_is_a_root == False:
-            print("ERROR: No node is the root!")
-            sys.exit(1)
+            raise Exception("No node is the root!")
         # Add distance to root for each node.
         for node in self.nodes:
             dist = 0
@@ -333,8 +330,7 @@ class Tree(object):
                     if tmp_node.get_is_root():
                         root_found = True
                     elif parent_found == False:
-                        print("ERROR: The parent of node " + tmp_node.id + " could not be found!")
-                        sys.exit(1)
+                        raise Exception("The parent of node " + tmp_node.id + " could not be found!")
 
             node.set_distance_to_root(dist)
             if dist > self.max_dist_to_root:
@@ -450,8 +446,7 @@ class Tree(object):
                             elif node.get_sequences()[0][x] == '-':
                                 state_set = ['A','C','G','T']
                             else:
-                                print("ERROR: Unknown character: " + node.get_sequences()[0][x])
-                                sys.exit(1)
+                                raise Exception("Unknown character: " + node.get_sequences()[0][x])
                             node.set_state_set(x, state_set)
             invest_dist -= 1
 
@@ -899,18 +894,17 @@ class Tree(object):
                         overlap = r1**2 * math.acos(p1) + r2**2 * math.acos(p2) - 0.5 * math.sqrt(under_root)
                         # As a sanity check, make sure that the result is between 0.5 and 1.0 times the smaller node area.
                         if overlap < 0.5 * math.pi * r2**2:
-                            print("ERROR: Overlap between nodes could not be calculated!")
-                            print("  Calculated overlap: ",overlap)
-                            print("  Radius of larger node: ",r1)
-                            print("  Radius of smaller node: ",r2)
-                            print("  Node center x positions: ",x1,", ",x2)
-                            print("  Node center y positions: ",y1,", ",y2)
-                            print("  Distance between node centers: ",d)
-                            print("  Half the area of the smaller node:",0.5 * math.pi * r2**2)
-                            sys.exit(1)
+                            print("ERROR: Overlap between nodes could not be calculated!", file=sys.stderr)
+                            print("  Calculated overlap: ", overlap, file=sys.stderr)
+                            print("  Radius of larger node: ", r1, file=sys.stderr)
+                            print("  Radius of smaller node: ", r2, file=sys.stderr)
+                            print("  Node center x positions: ", x1, ", ", x2, file=sys.stderr)
+                            print("  Node center y positions: ", y1, ", ", y2, file=sys.stderr)
+                            print("  Distance between node centers: ", d, file=sys.stderr)
+                            print("  Half the area of the smaller node:", 0.5 * math.pi * r2**2, file=sys.stderr)
+                            raise Exception("Overlap between nodes could not be calculated!")
                         elif overlap > math.pi * r2**2:
-                            print("ERROR: Overlap between nodes could not be calculated!")
-                            sys.exit(1)
+                            raise Exception("Overlap between nodes could not be calculated!")
                     elif d < r1 + r2: # Case 3: The circles overlap, but the centers are on both sides of the chord connecting the two intersection points.
                         # Equations from http://mathworld.wolfram.com/Circle-CircleIntersection.html
                         p1 = (d**2 + r1**2 - r2**2)/(2 * d * r1)
@@ -1832,8 +1826,7 @@ class XSeq(Seq):
     def get_distance_to(self, seq, transversions_only):
         distance = 0
         if len(self) != len(seq):
-            print("ERROR: Both sequences must be of the same length!")
-            sys.exit(1)
+            raise Exception("Both sequences must be of the same length!")
         for x in range(0,len(self)):
             if transversions_only:
                 if self[x] in ['A', 'G', 'R']:
@@ -2120,9 +2113,9 @@ class XMultipleSeqAlignment(MultipleSeqAlignment):
 
     def get_allele_frequencies(self, x, pops=[]):
         if isinstance(pops, list) == False:
-            print("ERROR: Populations are not given as a list (get_allele_frequencies):")
-            print(pops)
-            sys.exit(1)
+            print("ERROR: Populations are not given as a list (get_allele_frequencies):", file=sys.stderr)
+            print(pops, file=sys.stderr)
+            raise Exception("Populations are not given as a list")
         else:
             allele_frequencies = [0, 0, 0, 0]
             for y in range(0,len(self)):
@@ -2150,9 +2143,9 @@ class XMultipleSeqAlignment(MultipleSeqAlignment):
 
     def get_is_biallelic_per_site(self, x, pops=[]):
         if isinstance(pops, list) == False:
-            print("ERROR: Populations are not given as a list (get_is_biallelic_per_site):")
-            print(pops)
-            sys.exit(1)
+            print("ERROR: Populations are not given as a list (get_is_biallelic_per_site):", file=sys.stderr)
+            print(pops, file=sys.stderr)
+            raise Exception("Populations are not given as a list")
         else:
             allele_frequencies = [0, 0, 0, 0]
             for pop in pops:
@@ -2177,9 +2170,9 @@ class XMultipleSeqAlignment(MultipleSeqAlignment):
 
     def get_is_variable_per_site(self, x, pops=[]):
         if isinstance(pops, list) == False:
-            print("ERROR: Populations are not given as a list (get_is_variable_per_site):")
-            print(pops)
-            sys.exit(1)
+            print("ERROR: Populations are not given as a list (get_is_variable_per_site):", file=sys.stderr)
+            print(pops, file=sys.stderr)
+            raise Exception("Populations are not given as a list")
         else:
             allele_frequencies = [0, 0, 0, 0]
             for pop in pops:
@@ -2204,9 +2197,9 @@ class XMultipleSeqAlignment(MultipleSeqAlignment):
 
     def get_alleles_per_site(self, x, pops=[]):
         if isinstance(pops, list) == False:
-            print("ERROR: Populations are not given as a list (get_alleles_per_site):")
-            print(pops)
-            sys.exit(1)
+            print("ERROR: Populations are not given as a list (get_alleles_per_site):", file=sys.stderr)
+            print(pops, file=sys.stderr)
+            raise Exception("Populations are not given as a list")
         else:
             alleles = []
             for y in range(0,len(self)):
@@ -2225,9 +2218,9 @@ class XMultipleSeqAlignment(MultipleSeqAlignment):
         # islands in divergence of a songbird), only biallelic (or in this case monomorphic)
         # SNPs are allowed.
         if isinstance(pops, list) == False:
-            print("ERROR: Populations are not given as a list (get_pi_per_site):")
-            print(pops)
-            sys.exit(1)
+            print("ERROR: Populations are not given as a list (get_pi_per_site):", file=sys.stderr )
+            print(pops, file=sys.stderr )
+            raise Exception("Populations are not given as a list")
         else:
             all_allele_frequencies = self.get_allele_frequencies(x, pops)
             two_allele_frequencies = []
@@ -2263,8 +2256,7 @@ class XMultipleSeqAlignment(MultipleSeqAlignment):
 
     def get_F_st(self, pops=[]):
         if len(pops) != 2:
-            print("ERROR: Exactly two populations must be specified to calculate pairwise F_st!")
-            sys.exit(1)
+            raise Exception("Exactly two populations must be specified to calculate pairwise F_st!")
         else:
             # Initiate six lists that will be needed for Fst calculation.
             # ninds_dup_1 and ninds_dup_2 and the numbers of individuals for pop1 and pop2, per locus.
@@ -2332,15 +2324,13 @@ class XMultipleSeqAlignment(MultipleSeqAlignment):
                                 if good_allele_pop1 == good_unique_alleles_both_pops[0]:
                                     allele_A_occurrences_pop1 += 1
                                 elif good_allele_pop1 != good_unique_alleles_both_pops[1]:
-                                    print("ERROR: Unexpected allele found at site " + str(x) + ": " + good_allele_pop1 + "!")
-                                    sys.exit(1)
+                                    raise Exception("Unexpected allele found at site " + str(x) + ": " + good_allele_pop1 + "!")
                         for good_pair_of_alleles_pop2 in good_pairs_of_alleles_pop2:
                             for good_allele_pop2 in good_pair_of_alleles_pop2:
                                 if good_allele_pop2 == good_unique_alleles_both_pops[0]:
                                     allele_A_occurrences_pop2 += 1
                                 elif good_allele_pop2 != good_unique_alleles_both_pops[1]:
-                                    print("ERROR: Unexpected allele found at site " + str(x) + ": " + good_allele_pop2 + "!")
-                                    sys.exit(1)
+                                    raise Exception("Unexpected allele found at site " + str(x) + ": " + good_allele_pop2 + "!")
                         p1_this_site = allele_A_occurrences_pop1/(len(good_pairs_of_alleles_pop1)*2)
                         p2_this_site = allele_A_occurrences_pop2/(len(good_pairs_of_alleles_pop2)*2)
 
@@ -2412,8 +2402,7 @@ class XMultipleSeqAlignment(MultipleSeqAlignment):
 
     def get_d_xy(self, pops=[]):
         if len(pops) != 2:
-            print("ERROR: Exactly two populations must be specified to calculate pairwise d_xy!")
-            sys.exit(1)
+            raise Exception("Exactly two populations must be specified to calculate pairwise d_xy!")
         else:
             l_k = self.get_alignment_length()
             sum_of_quotients = 0
@@ -2437,10 +2426,10 @@ class XMultipleSeqAlignment(MultipleSeqAlignment):
                             two_allele_frequencies0.append(all_allele_frequencies0[3])
                             two_allele_frequencies1.append(all_allele_frequencies1[3])
                         if len(two_allele_frequencies0) != 2:
-                            print("ERROR: Wrong number of allele frequencies!")
-                            print(all_allele_frequencies0)
-                            print(all_allele_frequencies1)
-                            sys.exit(1)
+                            print("ERROR: Wrong number of allele frequencies!", file=sys.stderr)
+                            print(all_allele_frequencies0, file=sys.stderr)
+                            print(all_allele_frequencies1, file=sys.stderr)
+                            raise Exception("Wrong number of allele frequencies!")
                         r0 = two_allele_frequencies0[0]
                         a0 = two_allele_frequencies0[1]
                         r1 = two_allele_frequencies1[0]
@@ -2453,8 +2442,7 @@ class XMultipleSeqAlignment(MultipleSeqAlignment):
 
     def get_d_f(self, pops=[]):
         if len(pops) != 2:
-            print("ERROR: Exactly two populations must be specified to calculate pairwise d_f!")
-            sys.exit(1)
+            raise Exception("Exactly two populations must be specified to calculate pairwise d_f!")
         else:
             l_k = self.get_alignment_length()
             number_of_fixed_snps = 0
@@ -2711,23 +2699,19 @@ def run():
                 in_tree = False
             elif "format" in clean_line.lower():
                 if "interleave" in clean_line.lower():
-                    print("ERROR: Could not parse the alignment (should be sequential nexus format, but the format specification says that it is interleaved)!")
-                    sys.exit(1)
+                    raise Exception("Could not parse the alignment (should be sequential nexus format, but the format specification says that it is interleaved)!")
             elif in_matrix and clean_line != '':
                 line_ary = clean_line.split()
                 if len(line_ary) == 1:
-                    print("ERROR: Could not parse the alignment (should be sequential nexus format, but looks like it is interleaved)!")
-                    sys.exit(1)
+                    raise Exception("Could not parse the alignment (should be sequential nexus format, but looks like it is interleaved)!")
                 elif len(line_ary) > 2:
-                    print("ERROR: Could not parse the alignment!")
-                    sys.exit(1)
+                    raise Exception("Could not parse the alignment!")
                 else:
                     seq_string = line_ary[1].upper()
                 pattern = re.compile("^[a-zA-Z0-9_\.\-]+?$")
                 hit = pattern.search(line_ary[0])
                 if hit == None:
-                    print("ERROR: Taxon labels should include only 'A'-'Z', 'a'-'z', '0'-'9', '.', _', and '-'! Offending taxon label: " + line_ary[0] + ".")
-                    sys.exit(1)
+                    raise Exception("Taxon labels should include only 'A'-'Z', 'a'-'z', '0'-'9', '.', _', and '-'! Offending taxon label: " + line_ary[0] + ".")
                 if config.window_end_pos == -1:
                     seq_string = seq_string[config.window_start_pos:]
                 else:
@@ -2746,12 +2730,11 @@ def run():
                 tree_string = tree_patterns.group(0)
                 tree = Tree(tree_string)
         if records == []:
-            print("ERROR: File could not be parsed!")
+            raise Exception("File could not be parsed!")
         else:
             for record in records:
                 if record.id not in tree_string:
-                    print("ERROR: Record id " + record.id + " not found in tree string!")
-                    sys.exit(0)
+                    raise Exception("Record id " + record.id + " not found in tree string!")
 
         align = XMultipleSeqAlignment(records)
         if config.haploid:
@@ -2759,8 +2742,7 @@ def run():
         else:
             align.set_is_haploid(False)
     else:
-        print("ERROR: Unexpected file format!")
-        sys.exit(1)
+        raise Exception("Unexpected file format!")
 
     # Parse the newick tree string.
     tree.parse_newick_string(config.pops)
@@ -2774,15 +2756,11 @@ def run():
                 break
 
     # Make sure all non-internal nodes have sequences.
-    all_seqs_found = True
     for node in nodes:
         node_id = node.get_id()
         if node_id[:12] != 'internalNode':
             if node.get_sequences() == []:
-                print("ERROR: No sequence was found for node " + node_id + "!")
-                all_seqs_found = False
-    if all_seqs_found == False:
-        sys.exit(1)
+                raise Exception("No sequence was found for node " + node_id + "!")
 
     # Reconstruct ancestral sequences using the Fitch algorithm.
     tree.reconstruct_ancestral_sequences()
@@ -2810,9 +2788,9 @@ def run():
             tree.position('neato', config.minimum_node_size, config.radius_multiplier)
             overlap = tree.get_overlap(config.minimum_node_size, config.radius_multiplier)
             if config.radius_multiplier < 0.001:
-                print("ERROR: No suitable radius multiplier could be found automatically.")
-                print("  Try manually setting a value for the radius multiplier.")
-                sys.exit(1)
+                print("ERROR: No suitable radius multiplier could be found automatically.", file=sys.stderr)
+                print("  Try manually setting a value for the radius multiplier.", file=sys.stderr)
+                raise Exception("No suitable radius multiplier could be found automatically.")
         config.radius_multiplier = config.radius_multiplier * 0.75
         tree.position('neato', config.minimum_node_size, config.radius_multiplier)
         overlap = tree.get_overlap(config.minimum_node_size, config.radius_multiplier)
