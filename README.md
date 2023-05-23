@@ -1,6 +1,11 @@
-Fitchi
-======
+# Fitchi
+Haplotype genealogies based on Fitch distances.
 
-Haplotype genealogies based on Fitch distances
+This is a Python package for the [Fitchi](https://github.com/mmatschiner/Fitchi) algorithm.
+It does not include network visualization or statistics.
 
-Please see http://www.evoinformatics.eu/fitchi.htm for infos how to run Fitchi.
+### Citations
+
+Matschiner M (2015) Fitchi: Haplotype genealogy graphs based on the Fitch algorithm. Bioinformatics, 32:1250-252.
+
+Please see https://evoinformatics.group/fitchi.html for more information on the original Fitchi.

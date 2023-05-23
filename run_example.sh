@@ -3,4 +3,4 @@
 # See http://www.evoinformatics.eu/fitchi.htm for more information.
 # Start this script with 'bash run_simulation.sh'.
 
-python3 ./fitchi.py example.nex example.html -m 3 -p pop1 pop2
+fitchi example.nex example.html -m 3 -p pop1 pop2
