@@ -209,8 +209,8 @@ class Tree:
                 number_of_internal_nodes += 1
                 internal_node_id = "internalNode" + str(number_of_internal_nodes) + "X"
 
-                tree.add_node(hit.group(1), internal_node_id, tree.pops)
-                tree.add_node(hit.group(2), internal_node_id, tree.pops)
+                tree.add_node(hit.group(1), internal_node_id)
+                tree.add_node(hit.group(2), internal_node_id)
 
                 tree.add_edge(internal_node_id, hit.group(1))
                 tree.add_edge(internal_node_id, hit.group(2))
@@ -233,14 +233,14 @@ class Tree:
             tree.add_edge(root_node_id, hit_unrooted.group(2))
             tree.add_edge(root_node_id, hit_unrooted.group(3))
 
-            tree.add_node(hit_unrooted.group(1), root_node_id, tree.pops)
-            tree.add_node(hit_unrooted.group(2), root_node_id, tree.pops)
-            tree.add_node(hit_unrooted.group(3), root_node_id, tree.pops)
+            tree.add_node(hit_unrooted.group(1), root_node_id)
+            tree.add_node(hit_unrooted.group(2), root_node_id)
+            tree.add_node(hit_unrooted.group(3), root_node_id)
 
-            tree.add_node(root_node_id, None, tree.pops)
+            tree.add_node(root_node_id, None)
 
         elif hit_rooted != None:
-            tree.add_node(hit_rooted.group(0), None, tree.pops)
+            tree.add_node(hit_rooted.group(0), None)
         else:
             print(tree.newick_string, file=sys.stderr)
             raise Exception('The newick tree string could not be parsed! This can happen when the tree contains multiple true polytomies (not just zero-length branches of bi-furcating nodes)')
@@ -270,9 +270,9 @@ class Tree:
         edge.set_node_ids([node_id_a, node_id_b])
         self.edges.append(edge)
 
-    def add_node(self, id, parent_id, pops):
+    def add_node(self, id, parent_id):
         is_root = parent_id is None
-        node = Node(id, is_root, pops)
+        node = Node(id, is_root)
         node.set_parent_id(parent_id or 'None')
         if is_root or id.startswith('internalNode'):
             node.set_size(0)
@@ -280,6 +280,26 @@ class Tree:
             node.set_size(1)
             node.add_record_id(id)
         self.nodes.append(node)
+
+    def init_node_sequences(self, sequences: dict[str, str]):
+        # Make sure all non-internal nodes have sequences.
+        for node in self.get_internal_nodes():
+            id = node.get_id()
+            if id in sequences:
+                seq = sequences[id].upper()
+                node.set_sequences([seq])
+            else:
+                raise Exception(f"No sequence was found for node {id}!")
+
+    def init_node_pops(self, classifications: dict[str, str]):
+        for node in self.get_internal_nodes():
+            id = node.get_id()
+            if id in classifications:
+                pop = classifications[id]
+            else:
+                print(f"WARNING: No classification found for {id}!", file=sys.stderr)
+                pop = "unknown"
+            node.set_pops([pop])
 
     def set_node_distances_to_root(self):
         # Reset max_dist_to_root.
@@ -314,6 +334,11 @@ class Tree:
             node.set_distance_to_root(dist)
             if dist > self.max_dist_to_root:
                 self.max_dist_to_root = dist
+
+    def get_internal_nodes(self):
+        for node in self.get_nodes():
+            if not node.get_id().startswith("internalNode"):
+                yield node
 
     def get_nodes(self):
         return self.nodes
@@ -1403,7 +1428,7 @@ class Tree:
 # The Node class.
 class Node:
 
-    def __init__(self, id, is_root, pops):
+    def __init__(self, id, is_root):
         self.id = id
         self.is_root = is_root
         self.sequences = []
@@ -1419,11 +1444,6 @@ class Node:
         self.per_pop_sizes = []
         self.progeny_ids = []
         self.distance_to_root = None
-        for pop in pops:
-            if pop in self.id:
-                self.pops.append(pop)
-        if self.pops == [] and self.id[:12] != 'internalNode':
-            self.pops.append('unknown')
         self.x = 'None'
         self.y = 'None'
 
@@ -2712,6 +2732,15 @@ def cut_sequences(sequences: list[Sequence], start: int, end: int) -> list[Seque
     return [Sequence(x.id, x.seq[start:end]) for x in sequences]
 
 
+def create_simple_classifications(ids: list[str], pops: list[str]) -> dict[str, str]:
+    classifications = dict()
+    for id in ids:
+        for pop in pops:
+            if pop in id:
+                classifications[id] = pop
+                continue
+    return classifications
+
 def create_html_string(
     config: Configuration,
     align: XMultipleSeqAlignment,
@@ -3211,19 +3240,11 @@ def run():
     tree = Tree.from_newick_string(tree_string, config.pops)
 
     # Assign sequences to terminal nodes.
-    nodes = tree.get_nodes()
-    for node in nodes:
-        for seq in align:
-            if node.get_id() == seq.id:
-                node.set_sequences([str(seq.seq.upper())])
-                break
+    tree.init_node_sequences({x.id: x.seq for x in sequences})
 
-    # Make sure all non-internal nodes have sequences.
-    for node in nodes:
-        node_id = node.get_id()
-        if node_id[:12] != 'internalNode':
-            if node.get_sequences() == []:
-                raise Exception("No sequence was found for node " + node_id + "!")
+    # Assign population to terminal nodes.
+    classifications = create_simple_classifications([x.id for x in sequences], config.pops)
+    tree.init_node_pops(classifications)
 
     # Reconstruct ancestral sequences using the Fitch algorithm.
     tree.reconstruct_ancestral_sequences()
