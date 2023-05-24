@@ -18,13 +18,10 @@ __pycache__/
 Pipfile
 Pipfile.lock
 
-
 session.vim
 Makefile
 *.make
 .vs
 *.sln
 
-libseqphase.a
-
-/phase.*
+*.html
