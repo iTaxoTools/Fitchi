@@ -2712,6 +2712,490 @@ def cut_sequences(sequences: list[Sequence], start: int, end: int) -> list[Seque
     return [Sequence(x.id, x.seq[start:end]) for x in sequences]
 
 
+def create_html_string(
+    config: Configuration,
+    align: XMultipleSeqAlignment,
+    tree: Tree,
+    gsis: list[int],
+    svg_string: str
+) -> str:
+
+    # Initiate the html output string.
+    html_string = ''
+    html_string += '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"\n'
+    html_string += '"http://www.w3.org/TR/html4/loose.dtd">\n'
+    html_string += '<html>\n'
+    html_string += '  <head>\n'
+    html_string += '    <title>Fitchi results</title>\n'
+    html_string += '    <meta http-equiv="Content-Type" content="text/html; charset="utf-8">\n'
+    html_string += '    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">\n'
+    html_string += '    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>\n'
+    html_string += '    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>\n'
+    html_string += '\n'
+    html_string += '    <style type="text/css">\n'
+    html_string += '      a:link { text-decoration:none; color:#000000; }\n'
+    html_string += '      a:visited { text-decoration:none; color:#000000; }\n'
+    html_string += '      a:hover { text-decoration:none; color:#ffffff; background-color:#000000; }\n'
+    html_string += '      a:active { text-decoration:none; color:#ffffff; background-color:#000000; }\n'
+    html_string += '      a:focus { text-decoration:none; color:#ffffff; background-color:#000000; }\n'
+    html_string += '      #relativeSVG { position:relative; width:840px; height:236px; z-index:2 }\n'
+    html_string += '      #absoluteAst { position:absolute; top:20px; left:20px; width:20px; height:20px; z-index:1; background-color:#e05030 }\n'
+    html_string += '      td { font-family:helvetica; font-size:12px }\n'
+    html_string += '      tr.spaceUnder > td { padding-bottom: 1em; }\n'
+    html_string += '      tr.doubleSpaceUnder > td { padding-bottom: 2em; }\n'
+    html_string += '      tr.largeSpaceUnder > td { padding-bottom: 8em; }\n'
+    html_string += '      tr.smallSpaceUnder > td { padding-bottom: 0.2em; }\n'
+    html_string += '      tr.spaceOver > td { padding-top: 1em; }\n'
+    html_string += '      tr.spaceOverAndLargeSpaceUnder > td { padding-top: 1em; padding-bottom: 8em; }\n'
+    html_string += '    </style>\n'
+    html_string += '\n'
+    html_string += '    <script type="text/javascript">\n'
+    html_string += '      <!--\n'
+    html_string += '        function legend_toggle () {\n'
+    html_string += '          if(document.getElementById("legend").style.display == "none") {\n'
+    html_string += '            document.getElementById("legend").style.display = "inline";\n'
+    html_string += '          } else {\n'
+    html_string += '            document.getElementById("legend").style.display = "none";\n'
+    html_string += '          }\n'
+    html_string += '          if(document.getElementById("show").style.display == "none") {\n'
+    html_string += '            document.getElementById("show").style.display = "inline";\n'
+    html_string += '          } else {\n'
+    html_string += '            document.getElementById("show").style.display = "none";\n'
+    html_string += '          }\n'
+    html_string += '          if(document.getElementById("hide").style.display == "none") {\n'
+    html_string += '            document.getElementById("hide").style.display = "inline";\n'
+    html_string += '          } else {\n'
+    html_string += '            document.getElementById("hide").style.display = "none";\n'
+    html_string += '          }\n'
+    html_string += '        }\n'
+    html_string += '      //-->\n'
+    html_string += '    </script>\n'
+    html_string += '\n'
+    html_string += '    <script>\n'
+    html_string += '    $(document).ready(function(){\n'
+    html_string += '      $(\'[data-toggle="tooltip"]\').tooltip();\n'
+    html_string += '    });\n'
+    html_string += '    </script>\n'
+    html_string += '  </head>\n'
+    html_string += '\n'
+    html_string += '  <body>\n'
+    html_string += '    <div align="center">\n'
+    html_string += '      <table width="840" border="0" cellpadding="0" cellspacing="0">\n'
+    html_string += '        <tr>\n'
+    html_string += '          <td style="font-family:helvetica; font-size:54px; font-weight:bold">\n'
+    html_string += '            <svg width="50" height="50">\n'
+    html_string += '              <defs>\n'
+    html_string += '                <radialGradient id="radgrad" cx=".9" cy=".1" r="1">\n'
+    html_string += '                  <stop  offset="0" style="stop-color:grey"/>\n'
+    html_string += '                  <stop  offset="1" style="stop-color:black"/>\n'
+    html_string += '                </radialGradient>\n'
+    html_string += '                <mask id="m_0"><circle fill="url(#radgrad)" cx="30.964" cy="31.513" r="11.0695"/></mask>\n'
+    html_string += '                <mask id="m_1"><circle fill="url(#radgrad)" cx="39.693" cy="7.257" r="6.257"/></mask>\n'
+    html_string += '                <mask id="m_2"><circle fill="url(#radgrad)" cx="43.419" cy="45.559" r="3.44"/></mask>\n'
+    html_string += '                <mask id="m_3"><circle fill="url(#radgrad)" cx="7.91" cy="39.167" r="4.769"/></mask>\n'
+    html_string += '              </defs>\n'
+    html_string += '              <path fill="#94A2A1" stroke="#94A2A1" stroke-width="0.5" d="M32.802,20.593c5.745,0.957,9.882,6.31,9.147,12.25c-0.778,6.312-6.659,10.731-13.029,9.548c-6.298-1.18-10.148-7.31-8.733-13.371C21.521,23.296,27.118,19.643,32.802,20.593z"/>\n'
+    html_string += '              <line fill="none" stroke="#94A2A1" stroke-width="0.5" x1="39.693" y1="7.257" x2="30.965" y2="30.919"/>\n'
+    html_string += '              <line fill="none" stroke="#94A2A1" stroke-width="0.5" x1="30.965" y1="30.919" x2="7.91" y2="39.04"/>\n'
+    html_string += '              <line fill="none" stroke="#94A2A1" stroke-width="0.5" x1="30.965" y1="30.919" x2="43.419" y2="45.559"/>\n'
+    html_string += '              <path fill="#2BA199" d="M35.684,21.532c4.153,1.969,6.83,6.438,6.229,11.311c-0.242,1.953-1.007,3.819-2.22,5.4l-8.729-7.324L35.684,21.532z"/>\n'
+    html_string += '              <path fill="#859B3B" d="M30.965,30.919l1.834-10.292c1.02,0.17,1.986,0.479,2.885,0.905L30.965,30.919z"/>\n'
+    html_string += '              <path fill="#2E8BCB" d="M30.965,30.919l8.729,7.324c-1.652,2.136-4.045,3.601-6.723,4.11L30.965,30.919z"/>\n'
+    html_string += '              <path fill="#DC342E" d="M20.376,28.451c0.462-1.582,1.273-3.029,2.349-4.244l8.24,6.711L20.376,28.451z"/>\n'
+    html_string += '              <path fill="#D43883" d="M30.965,30.919l-6.627,9.429c-2.32-1.742-3.945-4.395-4.32-7.505c-0.184-1.522-0.045-3.01,0.359-4.392L30.965,30.919z"/>\n'
+    html_string += '              <path fill="#6F71B5" d="M28.059,42.163c-1.356-0.367-2.618-0.989-3.721-1.815l6.627-9.429l2.008,11.437C31.268,42.668,29.6,42.58,28.059,42.163z"/>\n'
+    html_string += '              <path fill="#CB4E27" d="M30.965,30.919l-8.24-6.711c1.634-1.845,3.878-3.152,6.443-3.581c0.66-0.114,1.326-0.164,1.993-0.153L30.965,30.919z"/>\n'
+    html_string += '              <path fill="#B48B2E" d="M31.161,20.474c0.548,0.008,1.096,0.061,1.638,0.153l-1.834,10.292L31.161,20.474z"/>\n'
+    html_string += '              <circle fill="#94A2A1" stroke="#94A2A1" stroke-width="0.5" cx="39.693" cy="7.257" r="6.257"/>\n'
+    html_string += '              <circle fill="#CB4E27" cx="39.693" cy="7.257" r="6.257"/>\n'
+    html_string += '              <path fill="#6F71B5" d="M39.693,7.257l2.311,5.816c-0.715,0.283-1.494,0.44-2.311,0.44c-0.836,0-1.635-0.165-2.362-0.461L39.693,7.257z"/>\n'
+    html_string += '              <path fill="#2BA199" d="M39.693,7.257l5.438,3.093c-0.698,1.228-1.803,2.196-3.129,2.723L39.693,7.257z"/>\n'
+    html_string += '              <path fill="#859B3B" d="M39.693,7.257V1c3.455,0,6.257,2.801,6.257,6.257c0,1.124-0.298,2.18-0.817,3.093L39.693,7.257z"/>\n'
+    html_string += '              <circle fill="#94A2A1" stroke="#94A2A1" stroke-width="0.5" cx="43.419" cy="45.559" r="3.44"/>\n'
+    html_string += '              <circle fill="#6F71B5" cx="43.419" cy="45.559" r="3.44"/>\n'
+    html_string += '              <circle fill="#94A2A1" stroke="#94A2A1" stroke-width="0.5" cx="7.91" cy="39.167" r="4.769"/>\n'
+    html_string += '              <circle fill="#2BA199" cx="7.91" cy="39.167" r="4.769"/>\n'
+    html_string += '              <path fill="#DC342E" d="M7.91,39.04l-1.548,4.64c-1.873-0.643-3.221-2.42-3.221-4.513c0-2.634,2.135-4.769,4.769-4.769V39.04z"/>\n'
+    html_string += '              <circle fill="#94A2A1" stroke="#94A2A1" stroke-width="0.5" cx="16.361" cy="36.069" r="0.255"/>\n'
+    html_string += '              <circle fill="#94A2A1" stroke="#94A2A1" stroke-width="0.5" cx="36.061" cy="17.115" r="0.255"/>\n'
+    html_string += '              <circle fill="white" cx="30.964" cy="31.513" r="11.0695" mask="url(#m_0)"/>\n'
+    html_string += '              <circle fill="white" cx="39.693" cy="7.257" r="6.257" mask="url(#m_1)"/>\n'
+    html_string += '              <circle fill="white" cx="43.419" cy="45.559" r="3.44" mask="url(#m_2)"/>\n'
+    html_string += '              <circle fill="white" cx="7.91" cy="39.167" r="4.769" mask="url(#m_3)"/>\n'
+    html_string += '            </svg>\n'
+    html_string += '            <a name="Fitchi" href="http://www.evoinformatics.eu" style="color:#000000; text-decoration:none; background-color:#ffffff">Fitchi</a><br><br>\n'
+    html_string += '          </td>\n'
+    html_string += '        </tr>\n'
+
+    # The summary section.
+    html_string += '        <tr class="smallSpaceUnder">\n'
+    html_string += '          <td style="font-size:30px; font-weight:bold">Summary</td>\n'
+    html_string += '        </tr>\n'
+    html_string += '        <tr class="largeSpaceUnder">\n'
+    html_string += '          <td>\n'
+    html_string += '            <table width="840" border="0" cellpadding="0" cellspacing="1">\n'
+    html_string += '              <tr>\n'
+    html_string += '                <td width="160" style="font-weight:bold">File Name</td>\n'
+    if config.infile.name == '<stdin>':
+        html_string += '                <td>STDIN</td>\n'
+    else:
+        html_string += '                <td>' + str(config.infile.name) + '</td>\n'
+    html_string += '              </tr>\n'
+    html_string += '              <tr>\n'
+    html_string += '                <td width="160" style="font-weight:bold"># Sites</td>\n'
+    html_string += '                <td>' + str(align.get_alignment_length())
+    if config.window_start_pos != 0 or config.window_end_pos != -1:
+        html_string += ' (positions '
+        html_string += str(config.window_start_pos+1) + '-'
+        if config.window_end_pos == -1:
+            html_string += str(align.get_alignment_length()+config.window_start_pos)
+        else:
+            html_string += str(config.window_end_pos)
+        html_string += ')'
+    html_string += '</td>\n'
+    html_string += '              </tr>\n'
+    html_string += '              <tr>\n'
+    html_string += '                <td width="160" style="font-weight:bold"># Sequence records</td>\n'
+    html_string += '                <td>' + str(align.get_number_of_records())
+    if config.pops != []:
+        pop_string = ' ('
+        for pop in config.pops:
+            pop_string += str(align.get_number_of_records(pop)) + ' x ' + pop + ', '
+        pop_string = pop_string[:-2]
+        html_string += pop_string + ')'
+    html_string += '</td>\n'
+    html_string += '              </tr>\n'
+    html_string += '            </table>\n'
+    html_string += '          </td>\n'
+    html_string += '        </tr>\n'
+
+    # The haplotype genealogy section.
+    html_string += '        <tr class="smallSpaceUnder">\n'
+    html_string += '          <td style="font-size:30px; font-weight:bold"><a href="http://onlinelibrary.wiley.com/doi/10.1111/j.1365-294X.2011.05066.x/abstract">Haplotype genealogy graph</a></td>\n'
+    html_string += '        </tr>\n'
+    html_string += '        <tr class="spaceUnder">\n'
+    html_string += '          <td>\n'
+    html_string += '            <table width="840" border="0" cellpadding="0" cellspacing="1">\n'
+
+    html_string += '              <tr>\n'
+    html_string += '                <td width="160" style="font-weight:bold">Node size</td>\n'
+    html_string += '                <td># sequence records</td>\n'
+    html_string += '              </tr>\n'
+    html_string += '              <tr>\n'
+    html_string += '                <td width="160" style="font-weight:bold">Edge length</td>\n'
+    if config.transversions_only:
+        html_string += '                <td># transversions</td>\n'
+    else:
+        html_string += '                <td># substitutions (transitions or transversions)</td>\n'
+    html_string += '              </tr>\n'
+
+
+    html_string += '              <tr>\n'
+    html_string += '                <td width="160" style="font-weight:bold">Minimum node size</td>\n'
+    html_string += '                <td>' + str(config.minimum_node_size) + ' sequence record'
+    if config.minimum_node_size > 1:
+        html_string += 's'
+    html_string += '</td>\n'
+    html_string += '              </tr>\n'
+    html_string += '              <tr>\n'
+    html_string += '                <td width="160" style="font-weight:bold">Minimum edge length</td>\n'
+    if config.transversions_only:
+        html_string += '                <td>' + str(config.minimum_edge_length) + ' transversion'
+    else:
+        html_string += '                <td>' + str(config.minimum_edge_length) + ' substitution'
+    if config.minimum_edge_length > 1:
+        html_string += 's'
+    html_string += '</td>\n'
+    html_string += '              </tr>\n'
+    html_string += '              <tr>\n'
+    html_string += '                <td width="160" style="font-weight:bold"># Nodes</td>\n'
+    html_string += '                <td>' + str(tree.get_number_of_nodes()) + '</td>\n'
+    html_string += '              </tr>\n'
+    html_string += '              <tr>\n'
+    html_string += '                <td width="160" style="font-weight:bold"># Edges</td>\n'
+    html_string += '                <td>' + str(tree.get_number_of_edges()) + '</td>\n'
+    html_string += '              </tr>\n'
+    html_string += '              <tr>\n'
+    html_string += '                <td width="160" style="font-weight:bold">Total Fitch distance</td>\n'
+    html_string += '                <td>'
+    total_fitch_distance = 0
+    for edge in tree.get_edges():
+        total_fitch_distance += edge.get_fitch_distance()
+    if config.transversions_only:
+        html_string += str(total_fitch_distance) + ' transversions</td>\n'
+    else:
+        html_string += str(total_fitch_distance) + ' substitutions</td>\n'
+    html_string += '              </tr>\n'
+    html_string += '              <tr>\n'
+    html_string += '                <td width="160" style="font-weight:bold">Random number seed</td>\n'
+    html_string += '                <td>' + str(config.seed) + '</td>\n'
+    html_string += '              </tr>\n'
+    html_string += '            </table>\n'
+    html_string += '          </td>\n'
+    html_string += '        </tr>\n'
+    html_string += '        <tr>\n'
+    html_string += '          <td align="center" style="border: 1px solid black">\n'
+    svg_lines = svg_string.split('\n')
+    for line in svg_lines:
+        html_string += '            ' + line + '\n'
+    html_string += '          </td>\n'
+    html_string += '        </tr>\n'
+    if len(tree.get_nodes()) > 0:
+        html_string += '        <tr class="spaceOver">\n'
+        html_string += '          <td style="font-weight:bold">\n'
+        html_string += '            <span id="show" style="display:inline">\n'
+        html_string += '              <button type="button" class="btn btn-default btn-xs" onclick="legend_toggle()">Show legend</button> \n'
+        html_string += '            </span>\n'
+        html_string += '            <span id="hide" style="display:none">\n'
+        html_string += '              <button type="button" class="btn btn-default btn-xs" onclick="legend_toggle()">Hide legend</button>\n'
+        html_string += '            </span>\n'
+        html_string += '          </td>\n'
+        html_string += '        </tr>\n'
+    html_string += '        <tr class="spaceOverAndLargeSpaceUnder">\n'
+    html_string += '          <td align="center">\n'
+    html_string += '            <span id="legend" style="display:none;">\n'
+    html_string += '              <div style="border-width:1px; border-style:solid; border-color:#000000;">\n'
+    if config.pops != []:
+        html_string += '                <table width="800" cellpadding="0" cellspacing="1">\n'
+        html_string += '                  <tr class="spaceOver">\n'
+        html_string += '                    <td width="160" style="font-weight:bold; font-family:Courier">Population</td>\n'
+        html_string += '                    <td width="100" style="font-weight:bold; font-family:Courier" colspan="2">Color</td>\n'
+        html_string += '                    <td width="300" style="font-weight:bold; font-family:Courier"># Nodes with population presence</td>\n'
+        html_string += '                    <td width="240" style="font-weight:bold; font-family:Courier">% Presence in non-empty nodes</td>\n'
+        html_string += '                  </tr>\n'
+        pop_count = 0
+        for pop in config.pops:
+            html_string += '                  <tr>\n'
+            html_string += '                    <td width="160" style="font-family:Courier">' + pop + '</td>\n'
+            if pop_count >= len(config.colors):
+                html_string += '                    <td width="40" bgcolor="#' + config.rest_color + '"></td>\n'
+            else:
+                html_string += '                    <td width="40" bgcolor="#' + config.colors[pop_count] + '"></td>\n'
+            html_string += '                    <td width="60"></td>\n'
+            node_count_with_pop = 0
+            non_empty_node_count = 0
+            for node in tree.get_nodes():
+                if pop in node.get_pops():
+                    node_count_with_pop += 1
+                if node.get_size() > 0:
+                    non_empty_node_count += 1
+            html_string += '                    <td style="font-family:Courier">' + str(node_count_with_pop) + '</td>\n'
+            if non_empty_node_count > 0:
+                html_string += '                    <td style="font-family:Courier">' + "{0:.2f}".format(100*node_count_with_pop/non_empty_node_count) + '</td>\n'
+            else:
+                html_string += '                    <td style="font-family:Courier">NA</td>\n'
+            html_string += '                  </tr>\n'
+            pop_count += 1
+        html_string += '                  <tr class="doubleSpaceUnder">\n'
+        html_string += '                    <td colspan="5"></td>\n'
+        html_string += '                  </tr>\n'
+        html_string += '                </table>\n'
+    html_string += '                <table width="800" cellpadding="0" cellspacing="1">\n'
+    html_string += '                  <!-- Legend: string start -->\n'
+    nodes = tree.get_nodes()
+    node_count = 0
+    first_node = True
+    for node in nodes:
+        if first_node == True:
+            first_node = False
+            html_string += '                  <tr class="spaceOver">\n'
+        else:
+            html_string += '                  <tr>\n'
+        html_string += '                    <td width="160" style="font-weight:bold; font-family:Courier">Node ' + str(node_count+1) + '</td>\n'
+        html_string += '                    <td></td>\n'
+        html_string += '                  </tr>\n'
+        html_string += '                  <tr>\n'
+        html_string += '                    <td valign="top" style="font-family:Courier">Sequence'
+        if len(set(node.get_sequences())) > 1:
+            html_string += 's'
+        html_string += ': </td>\n'
+        html_string += '                    <td style="font-family:Courier">\n'
+        html_string += '                      <div style="width: 640px; overflow: auto;">\n'
+        sequence_string = ''
+        for sequence in set(node.get_sequences()):
+            sequence_string += '                      ' + sequence + ',<br>\n'
+        sequence_string = sequence_string[:-6]
+        html_string += sequence_string
+        html_string += '\n'
+        html_string += '                      </div>\n'
+        html_string += '                    </td>\n'
+        html_string += '                  </tr>\n'
+        html_string += '                  <tr>\n'
+        html_string += '                    <td style="font-family:Courier">Size: </td>\n'
+        html_string += '                    <td style="font-family:Courier">' + str(node.get_size()) + ' sequence record'
+        if node.get_size() > 1:
+            html_string += 's'
+        if node.get_size() > 0 and config.pops != []:
+            per_pop_sizes = node.get_per_pop_sizes()
+            html_string += ' ('
+            pops_string = ''
+            for x in range(len(config.pops)):
+                if per_pop_sizes[x] > 0:
+                    pops_string += str(per_pop_sizes[x]) + ' x ' + config.pops[x] + ', '
+            pops_string = pops_string[:-2]
+            html_string += pops_string
+            html_string += ')'
+        html_string += '</td>\n'
+        html_string += '                  </tr>\n'
+        html_string += '                  <tr class="spaceUnder">\n'
+        html_string += '                    <td valign="top" style="font-family:Courier">Sequence record'
+        if len(node.get_record_ids()) > 1:
+            html_string += 's'
+        html_string += ': </td>\n'
+        html_string += '                    <td style="font-family:Courier">\n'
+        if len(node.get_record_ids()) > 0:
+            record_ids_string = ''
+            for record_id in sorted(node.get_record_ids()):
+                record_ids_string += '                    ' + record_id + ',<br>\n'
+            record_ids_string = record_ids_string[:-6]
+            html_string += record_ids_string + '\n'
+        else:
+            html_string += '                      None'
+        html_string += '                    </td>\n'
+        html_string += '                  </tr>\n'
+        node_count += 1
+    html_string += '                  <!-- Legend: string end -->\n'
+    html_string += '                </table>\n'
+    html_string += '              </div>\n'
+    html_string += '            </span>\n'
+    html_string += '          </td>\n'
+    html_string += '        <tr>\n'
+
+    # The nucleotide diversity section.
+    html_string += '        <tr class="smallSpaceUnder">\n'
+    html_string += '          <td style="font-size:30px; font-weight:bold">Nucleotide diversity</td>\n'
+    html_string += '        </tr>\n'
+    html_string += '        <tr class="largeSpaceUnder">\n'
+    html_string += '          <td style="font-family:helvetica; font-size:12px">\n'
+    html_string += '            <table width="840" border="0" cellpadding="0" cellspacing="1">\n'
+    html_string += '              <tr>\n'
+    html_string += '                <td width="168" style="font-weight:bold">Population</td>\n'
+    html_string += '                <td width="168" style="font-weight:bold">Variable sites</td>\n'
+    html_string += '                <td width="168" style="font-weight:bold">Invariable sites</td>\n'
+    html_string += '                <td width="168" style="font-weight:bold">Proportion variable</td>\n'
+    html_string += '                <td width="168" style="font-weight:bold"><a href="http://onlinelibrary.wiley.com/doi/10.1111/mec.12842/abstract" data-toggle="tooltip" data-html="true" title="probability that two randomly<br/>chosen sequences have<br/>different alleles at a SNP<br/>(see Ruegg et al. 2014)">&pi;&nbsp;&nbsp;</a></td>\n'
+    html_string += '              </tr>\n'
+    html_string += '              <tr>\n'
+    html_string += '                <td width="168" style="font-weight:bold">All</td>\n'
+    html_string += '                <!-- Total variable: string start -->\n'
+    html_string += '                <td width="168">' + str(align.get_number_of_variable_sites()) + '</td>\n'
+    html_string += '                <!-- Total variable: string end -->\n'
+    html_string += '                <td width="168">' + str(align.get_number_of_invariable_sites()) + '</td>\n'
+    html_string += '                <!-- Proportion variable: string start -->\n'
+    html_string += '                <td width="168">' + "{0:.4f}".format(align.get_proportion_of_variable_sites()) + '</td>\n'
+    html_string += '                <!-- Proportion variable: string end -->\n'
+    html_string += '                <!-- Pi: string start -->\n'
+    html_string += '                <td width="168">' + "{0:.4f}".format(align.get_pi()) + '</td>\n'
+    html_string += '                <!-- Pi: string end -->\n'
+    html_string += '              </tr>\n'
+    if config.pops != None:
+        for pop in config.pops:
+            html_string += '              <tr>\n'
+            html_string += '                <td width="168" style="font-weight:bold">' + pop + '</td>\n'
+            html_string += '                <td width="168">' + str(align.get_number_of_variable_sites([pop])) + '</td>\n'
+            html_string += '                <td width="168">' + str(align.get_number_of_invariable_sites([pop])) + '</td>\n'
+            html_string += '                <td width="168">' + "{0:.4f}".format(align.get_proportion_of_variable_sites([pop])) + '</td>\n'
+            html_string += '                <td width="168">' + "{0:.4f}".format(align.get_pi([pop])) + '</td>\n'
+            html_string += '              </tr>\n'
+    html_string += '            </table>\n'
+    html_string += '          </td>\n'
+    html_string += '        </tr>\n'
+
+    # The between population differentiation section.
+    if config.pops != None and len(config.pops) > 1:
+        html_string += '        <tr class="smallSpaceUnder">\n'
+        html_string += '          <td style="font-size:30px; font-weight:bold">Between-population differentiation</td>\n'
+        html_string += '        </tr>\n'
+        html_string += '        <tr class="largeSpaceUnder">\n'
+        html_string += '          <td style="font-family:helvetica; font-size:12px">\n'
+        html_string += '            <table width="840" border="0" cellpadding="0" cellspacing="1">\n'
+        html_string += '              <tr>\n'
+        html_string += '                <td width="168" style="font-weight:bold">Population 1</td>\n'
+        html_string += '                <td width="168" style="font-weight:bold">Population 2</td>\n'
+        html_string += '                <td width="168" style="font-weight:bold"><a href="http://www.jstor.org/stable/2408641" data-toggle="tooltip" data-html="true" title="fixation index estimator<br/>(Weir and Cockerham 1984)">F<sub>ST</sub>&nbsp;&nbsp;</a></td>\n'
+        html_string += '                <td width="168" style="font-weight:bold"><a href="http://onlinelibrary.wiley.com/doi/10.1111/mec.12842/abstract" data-toggle="tooltip" data-html="true" title="between-species average number of pairwise differences<br/>(see Ruegg et al. 2014)">d<sub>XY</sub>&nbsp;&nbsp;</a></td>\n'
+        html_string += '                <td width="168" style="font-weight:bold"><a href="http://onlinelibrary.wiley.com/doi/10.1111/mec.12842/abstract" data-toggle="tooltip" data-html="true" title="density of fixed differences<br/>per base pair<br/>(see Ruegg et al. 2014)">d<sub>f</sub>&nbsp;&nbsp;</a></td>\n'
+        html_string += '              </tr>\n'
+        for x in range(0,len(config.pops)-1):
+            for y in range(x+1,len(config.pops)):
+                html_string += '              <tr>\n'
+                html_string += '                <td width="168" style="font-weight:bold">' + config.pops[x] + '</td>\n'
+                html_string += '                <td width="168" style="font-weight:bold">' + config.pops[y] + '</td>\n'
+                f_st = align.get_F_st([config.pops[x], config.pops[y]])
+                if x == 0 and y == 1:
+                    html_string += '                <!-- First f_st: string start -->\n'
+                if f_st is None:
+                    html_string += '                <td>NA</td>\n'
+                else:
+                    html_string += '                <td width="168">' + "{0:.4f}".format(f_st) + '</td>\n'
+                if x == 0 and y == 1:
+                    html_string += '                <!-- First f_st: string end -->\n'
+                d_xy = align.get_d_xy([config.pops[x], config.pops[y]])
+                if x == 0 and y == 1:
+                    html_string += '                <!-- First d_xy: string start -->\n'
+                if d_xy is None:
+                    html_string += '                <td width="168">NA</td>\n'
+                else:
+                    html_string += '                <td width="168">' + "{0:.4f}".format(d_xy) + '</td>\n'
+                if x == 0 and y == 1:
+                    html_string += '                <!-- First d_xy: string end -->\n'
+                d_f = align.get_d_f([config.pops[x], config.pops[y]])
+                if x == 0 and y == 1:
+                    html_string += '                <!-- First d_f: string start -->\n'
+                if d_f is None:
+                    html_string += '                <td width="168">NA</td>\n'
+                else:
+                    html_string += '                <td width="168">' + "{0:.4f}".format(d_f) + '</td>\n'
+                if x == 0 and y == 1:
+                    html_string += '                <!-- First d_f: string end -->\n'
+                html_string += '              </tr>\n'
+        html_string += '            </table>\n'
+        html_string += '          </td>\n'
+        html_string += '        </tr>\n'
+
+    # The genealogical sorting index section.
+    if len(config.pops) > 0:
+        html_string += '        <tr class="smallSpaceUnder">\n'
+        html_string += '          <td style="font-size:30px; font-weight:bold">Genealogical sorting index</td>\n'
+        html_string += '        </tr>\n'
+        html_string += '        <tr class="largeSpaceUnder">\n'
+        html_string += '          <td style="font-family:helvetica; font-size:12px">\n'
+        html_string += '            <table width="840" border="0" cellpadding="0" cellspacing="1">\n'
+        html_string += '              <tr>\n'
+        html_string += '                <td width="168" style="font-weight:bold">Population</td>\n'
+        html_string += '                <td width="672" style="font-weight:bold"><a href="http://onlinelibrary.wiley.com/doi/10.1111/j.1558-5646.2008.00442.x/abstract" data-toggle="tooltip" data-html="true" title="genealogical sorting index<br/>(Cummings et al. 2008)">gsi&nbsp;&nbsp;</a></td>\n'
+        html_string += '              </tr>\n'
+        for x in range(0,len(config.pops)):
+            html_string += '              <tr>\n'
+            html_string += '                <td width="168" style="font-weight:bold">' + config.pops[x] + '</td>\n'
+            if x == 0:
+                html_string += '                <!-- First gsi: string start -->\n'
+            elif x == 1:
+                html_string += '                <!-- Second gsi: string start -->\n'
+            if gsis[x] == None:
+                html_string += '                <td width="672">NA</td>\n'
+            else:
+                html_string += '                <td width="672">' + "{0:.4f}".format(gsis[x]) + '</td>\n'
+            if x == 0:
+                html_string += '                <!-- First gsi: string end -->\n'
+            elif x == 1:
+                html_string += '                <!-- Second gsi: string end -->\n'
+            html_string += '              </tr>\n'
+        html_string += '            </table>\n'
+        html_string += '          </td>\n'
+        html_string += '        </tr>\n'
+
+    # Finalize the html string.
+    html_string += '      </table>\n'
+    html_string += '    </div>\n'
+    html_string += '  </body>\n'
+    html_string += '</html>\n'
+    html_string += ''
+    html_string += ''
+
+    return html_string
+
+
 def run():
     config = parse_arguments()
     random.seed(config.seed)
@@ -2777,483 +3261,6 @@ def run():
     # Produce the svg tree string.
     svg_string = tree.to_svg(840, 700, 10, config.minimum_node_size, config.radius_multiplier, config.colors, config.rest_color, config.pops)
 
-    def create_html_string():
-        # Initiate the html output string.
-        html_string = ''
-        html_string += '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"\n'
-        html_string += '"http://www.w3.org/TR/html4/loose.dtd">\n'
-        html_string += '<html>\n'
-        html_string += '  <head>\n'
-        html_string += '    <title>Fitchi results</title>\n'
-        html_string += '    <meta http-equiv="Content-Type" content="text/html; charset="utf-8">\n'
-        html_string += '    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">\n'
-        html_string += '    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>\n'
-        html_string += '    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>\n'
-        html_string += '\n'
-        html_string += '    <style type="text/css">\n'
-        html_string += '      a:link { text-decoration:none; color:#000000; }\n'
-        html_string += '      a:visited { text-decoration:none; color:#000000; }\n'
-        html_string += '      a:hover { text-decoration:none; color:#ffffff; background-color:#000000; }\n'
-        html_string += '      a:active { text-decoration:none; color:#ffffff; background-color:#000000; }\n'
-        html_string += '      a:focus { text-decoration:none; color:#ffffff; background-color:#000000; }\n'
-        html_string += '      #relativeSVG { position:relative; width:840px; height:236px; z-index:2 }\n'
-        html_string += '      #absoluteAst { position:absolute; top:20px; left:20px; width:20px; height:20px; z-index:1; background-color:#e05030 }\n'
-        html_string += '      td { font-family:helvetica; font-size:12px }\n'
-        html_string += '      tr.spaceUnder > td { padding-bottom: 1em; }\n'
-        html_string += '      tr.doubleSpaceUnder > td { padding-bottom: 2em; }\n'
-        html_string += '      tr.largeSpaceUnder > td { padding-bottom: 8em; }\n'
-        html_string += '      tr.smallSpaceUnder > td { padding-bottom: 0.2em; }\n'
-        html_string += '      tr.spaceOver > td { padding-top: 1em; }\n'
-        html_string += '      tr.spaceOverAndLargeSpaceUnder > td { padding-top: 1em; padding-bottom: 8em; }\n'
-        html_string += '    </style>\n'
-        html_string += '\n'
-        html_string += '    <script type="text/javascript">\n'
-        html_string += '      <!--\n'
-        html_string += '        function legend_toggle () {\n'
-        html_string += '          if(document.getElementById("legend").style.display == "none") {\n'
-        html_string += '            document.getElementById("legend").style.display = "inline";\n'
-        html_string += '          } else {\n'
-        html_string += '            document.getElementById("legend").style.display = "none";\n'
-        html_string += '          }\n'
-        html_string += '          if(document.getElementById("show").style.display == "none") {\n'
-        html_string += '            document.getElementById("show").style.display = "inline";\n'
-        html_string += '          } else {\n'
-        html_string += '            document.getElementById("show").style.display = "none";\n'
-        html_string += '          }\n'
-        html_string += '          if(document.getElementById("hide").style.display == "none") {\n'
-        html_string += '            document.getElementById("hide").style.display = "inline";\n'
-        html_string += '          } else {\n'
-        html_string += '            document.getElementById("hide").style.display = "none";\n'
-        html_string += '          }\n'
-        html_string += '        }\n'
-        html_string += '      //-->\n'
-        html_string += '    </script>\n'
-        html_string += '\n'
-        html_string += '    <script>\n'
-        html_string += '    $(document).ready(function(){\n'
-        html_string += '      $(\'[data-toggle="tooltip"]\').tooltip();\n'
-        html_string += '    });\n'
-        html_string += '    </script>\n'
-        html_string += '  </head>\n'
-        html_string += '\n'
-        html_string += '  <body>\n'
-        html_string += '    <div align="center">\n'
-        html_string += '      <table width="840" border="0" cellpadding="0" cellspacing="0">\n'
-        html_string += '        <tr>\n'
-        html_string += '          <td style="font-family:helvetica; font-size:54px; font-weight:bold">\n'
-        html_string += '            <svg width="50" height="50">\n'
-        html_string += '              <defs>\n'
-        html_string += '                <radialGradient id="radgrad" cx=".9" cy=".1" r="1">\n'
-        html_string += '                  <stop  offset="0" style="stop-color:grey"/>\n'
-        html_string += '                  <stop  offset="1" style="stop-color:black"/>\n'
-        html_string += '                </radialGradient>\n'
-        html_string += '                <mask id="m_0"><circle fill="url(#radgrad)" cx="30.964" cy="31.513" r="11.0695"/></mask>\n'
-        html_string += '                <mask id="m_1"><circle fill="url(#radgrad)" cx="39.693" cy="7.257" r="6.257"/></mask>\n'
-        html_string += '                <mask id="m_2"><circle fill="url(#radgrad)" cx="43.419" cy="45.559" r="3.44"/></mask>\n'
-        html_string += '                <mask id="m_3"><circle fill="url(#radgrad)" cx="7.91" cy="39.167" r="4.769"/></mask>\n'
-        html_string += '              </defs>\n'
-        html_string += '              <path fill="#94A2A1" stroke="#94A2A1" stroke-width="0.5" d="M32.802,20.593c5.745,0.957,9.882,6.31,9.147,12.25c-0.778,6.312-6.659,10.731-13.029,9.548c-6.298-1.18-10.148-7.31-8.733-13.371C21.521,23.296,27.118,19.643,32.802,20.593z"/>\n'
-        html_string += '              <line fill="none" stroke="#94A2A1" stroke-width="0.5" x1="39.693" y1="7.257" x2="30.965" y2="30.919"/>\n'
-        html_string += '              <line fill="none" stroke="#94A2A1" stroke-width="0.5" x1="30.965" y1="30.919" x2="7.91" y2="39.04"/>\n'
-        html_string += '              <line fill="none" stroke="#94A2A1" stroke-width="0.5" x1="30.965" y1="30.919" x2="43.419" y2="45.559"/>\n'
-        html_string += '              <path fill="#2BA199" d="M35.684,21.532c4.153,1.969,6.83,6.438,6.229,11.311c-0.242,1.953-1.007,3.819-2.22,5.4l-8.729-7.324L35.684,21.532z"/>\n'
-        html_string += '              <path fill="#859B3B" d="M30.965,30.919l1.834-10.292c1.02,0.17,1.986,0.479,2.885,0.905L30.965,30.919z"/>\n'
-        html_string += '              <path fill="#2E8BCB" d="M30.965,30.919l8.729,7.324c-1.652,2.136-4.045,3.601-6.723,4.11L30.965,30.919z"/>\n'
-        html_string += '              <path fill="#DC342E" d="M20.376,28.451c0.462-1.582,1.273-3.029,2.349-4.244l8.24,6.711L20.376,28.451z"/>\n'
-        html_string += '              <path fill="#D43883" d="M30.965,30.919l-6.627,9.429c-2.32-1.742-3.945-4.395-4.32-7.505c-0.184-1.522-0.045-3.01,0.359-4.392L30.965,30.919z"/>\n'
-        html_string += '              <path fill="#6F71B5" d="M28.059,42.163c-1.356-0.367-2.618-0.989-3.721-1.815l6.627-9.429l2.008,11.437C31.268,42.668,29.6,42.58,28.059,42.163z"/>\n'
-        html_string += '              <path fill="#CB4E27" d="M30.965,30.919l-8.24-6.711c1.634-1.845,3.878-3.152,6.443-3.581c0.66-0.114,1.326-0.164,1.993-0.153L30.965,30.919z"/>\n'
-        html_string += '              <path fill="#B48B2E" d="M31.161,20.474c0.548,0.008,1.096,0.061,1.638,0.153l-1.834,10.292L31.161,20.474z"/>\n'
-        html_string += '              <circle fill="#94A2A1" stroke="#94A2A1" stroke-width="0.5" cx="39.693" cy="7.257" r="6.257"/>\n'
-        html_string += '              <circle fill="#CB4E27" cx="39.693" cy="7.257" r="6.257"/>\n'
-        html_string += '              <path fill="#6F71B5" d="M39.693,7.257l2.311,5.816c-0.715,0.283-1.494,0.44-2.311,0.44c-0.836,0-1.635-0.165-2.362-0.461L39.693,7.257z"/>\n'
-        html_string += '              <path fill="#2BA199" d="M39.693,7.257l5.438,3.093c-0.698,1.228-1.803,2.196-3.129,2.723L39.693,7.257z"/>\n'
-        html_string += '              <path fill="#859B3B" d="M39.693,7.257V1c3.455,0,6.257,2.801,6.257,6.257c0,1.124-0.298,2.18-0.817,3.093L39.693,7.257z"/>\n'
-        html_string += '              <circle fill="#94A2A1" stroke="#94A2A1" stroke-width="0.5" cx="43.419" cy="45.559" r="3.44"/>\n'
-        html_string += '              <circle fill="#6F71B5" cx="43.419" cy="45.559" r="3.44"/>\n'
-        html_string += '              <circle fill="#94A2A1" stroke="#94A2A1" stroke-width="0.5" cx="7.91" cy="39.167" r="4.769"/>\n'
-        html_string += '              <circle fill="#2BA199" cx="7.91" cy="39.167" r="4.769"/>\n'
-        html_string += '              <path fill="#DC342E" d="M7.91,39.04l-1.548,4.64c-1.873-0.643-3.221-2.42-3.221-4.513c0-2.634,2.135-4.769,4.769-4.769V39.04z"/>\n'
-        html_string += '              <circle fill="#94A2A1" stroke="#94A2A1" stroke-width="0.5" cx="16.361" cy="36.069" r="0.255"/>\n'
-        html_string += '              <circle fill="#94A2A1" stroke="#94A2A1" stroke-width="0.5" cx="36.061" cy="17.115" r="0.255"/>\n'
-        html_string += '              <circle fill="white" cx="30.964" cy="31.513" r="11.0695" mask="url(#m_0)"/>\n'
-        html_string += '              <circle fill="white" cx="39.693" cy="7.257" r="6.257" mask="url(#m_1)"/>\n'
-        html_string += '              <circle fill="white" cx="43.419" cy="45.559" r="3.44" mask="url(#m_2)"/>\n'
-        html_string += '              <circle fill="white" cx="7.91" cy="39.167" r="4.769" mask="url(#m_3)"/>\n'
-        html_string += '            </svg>\n'
-        html_string += '            <a name="Fitchi" href="http://www.evoinformatics.eu" style="color:#000000; text-decoration:none; background-color:#ffffff">Fitchi</a><br><br>\n'
-        html_string += '          </td>\n'
-        html_string += '        </tr>\n'
-
-        # The summary section.
-        html_string += '        <tr class="smallSpaceUnder">\n'
-        html_string += '          <td style="font-size:30px; font-weight:bold">Summary</td>\n'
-        html_string += '        </tr>\n'
-        html_string += '        <tr class="largeSpaceUnder">\n'
-        html_string += '          <td>\n'
-        html_string += '            <table width="840" border="0" cellpadding="0" cellspacing="1">\n'
-        html_string += '              <tr>\n'
-        html_string += '                <td width="160" style="font-weight:bold">File Name</td>\n'
-        if config.infile.name == '<stdin>':
-            html_string += '                <td>STDIN</td>\n'
-        else:
-            html_string += '                <td>' + str(config.infile.name) + '</td>\n'
-        html_string += '              </tr>\n'
-        html_string += '              <tr>\n'
-        html_string += '                <td width="160" style="font-weight:bold"># Sites</td>\n'
-        html_string += '                <td>' + str(align.get_alignment_length())
-        if config.window_start_pos != 0 or config.window_end_pos != -1:
-            html_string += ' (positions '
-            html_string += str(config.window_start_pos+1) + '-'
-            if config.window_end_pos == -1:
-                html_string += str(align.get_alignment_length()+config.window_start_pos)
-            else:
-                html_string += str(config.window_end_pos)
-            html_string += ')'
-        html_string += '</td>\n'
-        html_string += '              </tr>\n'
-        html_string += '              <tr>\n'
-        html_string += '                <td width="160" style="font-weight:bold"># Sequence records</td>\n'
-        html_string += '                <td>' + str(align.get_number_of_records())
-        if config.pops != []:
-            pop_string = ' ('
-            for pop in config.pops:
-                pop_string += str(align.get_number_of_records(pop)) + ' x ' + pop + ', '
-            pop_string = pop_string[:-2]
-            html_string += pop_string + ')'
-        html_string += '</td>\n'
-        html_string += '              </tr>\n'
-        html_string += '            </table>\n'
-        html_string += '          </td>\n'
-        html_string += '        </tr>\n'
-
-        # The haplotype genealogy section.
-        html_string += '        <tr class="smallSpaceUnder">\n'
-        html_string += '          <td style="font-size:30px; font-weight:bold"><a href="http://onlinelibrary.wiley.com/doi/10.1111/j.1365-294X.2011.05066.x/abstract">Haplotype genealogy graph</a></td>\n'
-        html_string += '        </tr>\n'
-        html_string += '        <tr class="spaceUnder">\n'
-        html_string += '          <td>\n'
-        html_string += '            <table width="840" border="0" cellpadding="0" cellspacing="1">\n'
-
-        html_string += '              <tr>\n'
-        html_string += '                <td width="160" style="font-weight:bold">Node size</td>\n'
-        html_string += '                <td># sequence records</td>\n'
-        html_string += '              </tr>\n'
-        html_string += '              <tr>\n'
-        html_string += '                <td width="160" style="font-weight:bold">Edge length</td>\n'
-        if config.transversions_only:
-            html_string += '                <td># transversions</td>\n'
-        else:
-            html_string += '                <td># substitutions (transitions or transversions)</td>\n'
-        html_string += '              </tr>\n'
-
-
-        html_string += '              <tr>\n'
-        html_string += '                <td width="160" style="font-weight:bold">Minimum node size</td>\n'
-        html_string += '                <td>' + str(config.minimum_node_size) + ' sequence record'
-        if config.minimum_node_size > 1:
-            html_string += 's'
-        html_string += '</td>\n'
-        html_string += '              </tr>\n'
-        html_string += '              <tr>\n'
-        html_string += '                <td width="160" style="font-weight:bold">Minimum edge length</td>\n'
-        if config.transversions_only:
-            html_string += '                <td>' + str(config.minimum_edge_length) + ' transversion'
-        else:
-            html_string += '                <td>' + str(config.minimum_edge_length) + ' substitution'
-        if config.minimum_edge_length > 1:
-            html_string += 's'
-        html_string += '</td>\n'
-        html_string += '              </tr>\n'
-        html_string += '              <tr>\n'
-        html_string += '                <td width="160" style="font-weight:bold"># Nodes</td>\n'
-        html_string += '                <td>' + str(tree.get_number_of_nodes()) + '</td>\n'
-        html_string += '              </tr>\n'
-        html_string += '              <tr>\n'
-        html_string += '                <td width="160" style="font-weight:bold"># Edges</td>\n'
-        html_string += '                <td>' + str(tree.get_number_of_edges()) + '</td>\n'
-        html_string += '              </tr>\n'
-        html_string += '              <tr>\n'
-        html_string += '                <td width="160" style="font-weight:bold">Total Fitch distance</td>\n'
-        html_string += '                <td>'
-        total_fitch_distance = 0
-        for edge in tree.get_edges():
-            total_fitch_distance += edge.get_fitch_distance()
-        if config.transversions_only:
-            html_string += str(total_fitch_distance) + ' transversions</td>\n'
-        else:
-            html_string += str(total_fitch_distance) + ' substitutions</td>\n'
-        html_string += '              </tr>\n'
-        html_string += '              <tr>\n'
-        html_string += '                <td width="160" style="font-weight:bold">Random number seed</td>\n'
-        html_string += '                <td>' + str(config.seed) + '</td>\n'
-        html_string += '              </tr>\n'
-        html_string += '            </table>\n'
-        html_string += '          </td>\n'
-        html_string += '        </tr>\n'
-        html_string += '        <tr>\n'
-        html_string += '          <td align="center" style="border: 1px solid black">\n'
-        svg_lines = svg_string.split('\n')
-        for line in svg_lines:
-            html_string += '            ' + line + '\n'
-        html_string += '          </td>\n'
-        html_string += '        </tr>\n'
-        if len(tree.get_nodes()) > 0:
-            html_string += '        <tr class="spaceOver">\n'
-            html_string += '          <td style="font-weight:bold">\n'
-            html_string += '            <span id="show" style="display:inline">\n'
-            html_string += '              <button type="button" class="btn btn-default btn-xs" onclick="legend_toggle()">Show legend</button> \n'
-            html_string += '            </span>\n'
-            html_string += '            <span id="hide" style="display:none">\n'
-            html_string += '              <button type="button" class="btn btn-default btn-xs" onclick="legend_toggle()">Hide legend</button>\n'
-            html_string += '            </span>\n'
-            html_string += '          </td>\n'
-            html_string += '        </tr>\n'
-        html_string += '        <tr class="spaceOverAndLargeSpaceUnder">\n'
-        html_string += '          <td align="center">\n'
-        html_string += '            <span id="legend" style="display:none;">\n'
-        html_string += '              <div style="border-width:1px; border-style:solid; border-color:#000000;">\n'
-        if config.pops != []:
-            html_string += '                <table width="800" cellpadding="0" cellspacing="1">\n'
-            html_string += '                  <tr class="spaceOver">\n'
-            html_string += '                    <td width="160" style="font-weight:bold; font-family:Courier">Population</td>\n'
-            html_string += '                    <td width="100" style="font-weight:bold; font-family:Courier" colspan="2">Color</td>\n'
-            html_string += '                    <td width="300" style="font-weight:bold; font-family:Courier"># Nodes with population presence</td>\n'
-            html_string += '                    <td width="240" style="font-weight:bold; font-family:Courier">% Presence in non-empty nodes</td>\n'
-            html_string += '                  </tr>\n'
-            pop_count = 0
-            for pop in config.pops:
-                html_string += '                  <tr>\n'
-                html_string += '                    <td width="160" style="font-family:Courier">' + pop + '</td>\n'
-                if pop_count >= len(config.colors):
-                    html_string += '                    <td width="40" bgcolor="#' + config.rest_color + '"></td>\n'
-                else:
-                    html_string += '                    <td width="40" bgcolor="#' + config.colors[pop_count] + '"></td>\n'
-                html_string += '                    <td width="60"></td>\n'
-                node_count_with_pop = 0
-                non_empty_node_count = 0
-                for node in tree.get_nodes():
-                    if pop in node.get_pops():
-                        node_count_with_pop += 1
-                    if node.get_size() > 0:
-                        non_empty_node_count += 1
-                html_string += '                    <td style="font-family:Courier">' + str(node_count_with_pop) + '</td>\n'
-                if non_empty_node_count > 0:
-                    html_string += '                    <td style="font-family:Courier">' + "{0:.2f}".format(100*node_count_with_pop/non_empty_node_count) + '</td>\n'
-                else:
-                    html_string += '                    <td style="font-family:Courier">NA</td>\n'
-                html_string += '                  </tr>\n'
-                pop_count += 1
-            html_string += '                  <tr class="doubleSpaceUnder">\n'
-            html_string += '                    <td colspan="5"></td>\n'
-            html_string += '                  </tr>\n'
-            html_string += '                </table>\n'
-        html_string += '                <table width="800" cellpadding="0" cellspacing="1">\n'
-        html_string += '                  <!-- Legend: string start -->\n'
-        nodes = tree.get_nodes()
-        node_count = 0
-        first_node = True
-        for node in nodes:
-            if first_node == True:
-                first_node = False
-                html_string += '                  <tr class="spaceOver">\n'
-            else:
-                html_string += '                  <tr>\n'
-            html_string += '                    <td width="160" style="font-weight:bold; font-family:Courier">Node ' + str(node_count+1) + '</td>\n'
-            html_string += '                    <td></td>\n'
-            html_string += '                  </tr>\n'
-            html_string += '                  <tr>\n'
-            html_string += '                    <td valign="top" style="font-family:Courier">Sequence'
-            if len(set(node.get_sequences())) > 1:
-                html_string += 's'
-            html_string += ': </td>\n'
-            html_string += '                    <td style="font-family:Courier">\n'
-            html_string += '                      <div style="width: 640px; overflow: auto;">\n'
-            sequence_string = ''
-            for sequence in set(node.get_sequences()):
-                sequence_string += '                      ' + sequence + ',<br>\n'
-            sequence_string = sequence_string[:-6]
-            html_string += sequence_string
-            html_string += '\n'
-            html_string += '                      </div>\n'
-            html_string += '                    </td>\n'
-            html_string += '                  </tr>\n'
-            html_string += '                  <tr>\n'
-            html_string += '                    <td style="font-family:Courier">Size: </td>\n'
-            html_string += '                    <td style="font-family:Courier">' + str(node.get_size()) + ' sequence record'
-            if node.get_size() > 1:
-                html_string += 's'
-            if node.get_size() > 0 and config.pops != []:
-                per_pop_sizes = node.get_per_pop_sizes()
-                html_string += ' ('
-                pops_string = ''
-                for x in range(len(config.pops)):
-                    if per_pop_sizes[x] > 0:
-                        pops_string += str(per_pop_sizes[x]) + ' x ' + config.pops[x] + ', '
-                pops_string = pops_string[:-2]
-                html_string += pops_string
-                html_string += ')'
-            html_string += '</td>\n'
-            html_string += '                  </tr>\n'
-            html_string += '                  <tr class="spaceUnder">\n'
-            html_string += '                    <td valign="top" style="font-family:Courier">Sequence record'
-            if len(node.get_record_ids()) > 1:
-                html_string += 's'
-            html_string += ': </td>\n'
-            html_string += '                    <td style="font-family:Courier">\n'
-            if len(node.get_record_ids()) > 0:
-                record_ids_string = ''
-                for record_id in sorted(node.get_record_ids()):
-                    record_ids_string += '                    ' + record_id + ',<br>\n'
-                record_ids_string = record_ids_string[:-6]
-                html_string += record_ids_string + '\n'
-            else:
-                html_string += '                      None'
-            html_string += '                    </td>\n'
-            html_string += '                  </tr>\n'
-            node_count += 1
-        html_string += '                  <!-- Legend: string end -->\n'
-        html_string += '                </table>\n'
-        html_string += '              </div>\n'
-        html_string += '            </span>\n'
-        html_string += '          </td>\n'
-        html_string += '        <tr>\n'
-
-        # The nucleotide diversity section.
-        html_string += '        <tr class="smallSpaceUnder">\n'
-        html_string += '          <td style="font-size:30px; font-weight:bold">Nucleotide diversity</td>\n'
-        html_string += '        </tr>\n'
-        html_string += '        <tr class="largeSpaceUnder">\n'
-        html_string += '          <td style="font-family:helvetica; font-size:12px">\n'
-        html_string += '            <table width="840" border="0" cellpadding="0" cellspacing="1">\n'
-        html_string += '              <tr>\n'
-        html_string += '                <td width="168" style="font-weight:bold">Population</td>\n'
-        html_string += '                <td width="168" style="font-weight:bold">Variable sites</td>\n'
-        html_string += '                <td width="168" style="font-weight:bold">Invariable sites</td>\n'
-        html_string += '                <td width="168" style="font-weight:bold">Proportion variable</td>\n'
-        html_string += '                <td width="168" style="font-weight:bold"><a href="http://onlinelibrary.wiley.com/doi/10.1111/mec.12842/abstract" data-toggle="tooltip" data-html="true" title="probability that two randomly<br/>chosen sequences have<br/>different alleles at a SNP<br/>(see Ruegg et al. 2014)">&pi;&nbsp;&nbsp;</a></td>\n'
-        html_string += '              </tr>\n'
-        html_string += '              <tr>\n'
-        html_string += '                <td width="168" style="font-weight:bold">All</td>\n'
-        html_string += '                <!-- Total variable: string start -->\n'
-        html_string += '                <td width="168">' + str(align.get_number_of_variable_sites()) + '</td>\n'
-        html_string += '                <!-- Total variable: string end -->\n'
-        html_string += '                <td width="168">' + str(align.get_number_of_invariable_sites()) + '</td>\n'
-        html_string += '                <!-- Proportion variable: string start -->\n'
-        html_string += '                <td width="168">' + "{0:.4f}".format(align.get_proportion_of_variable_sites()) + '</td>\n'
-        html_string += '                <!-- Proportion variable: string end -->\n'
-        html_string += '                <!-- Pi: string start -->\n'
-        html_string += '                <td width="168">' + "{0:.4f}".format(align.get_pi()) + '</td>\n'
-        html_string += '                <!-- Pi: string end -->\n'
-        html_string += '              </tr>\n'
-        if config.pops != None:
-            for pop in config.pops:
-                html_string += '              <tr>\n'
-                html_string += '                <td width="168" style="font-weight:bold">' + pop + '</td>\n'
-                html_string += '                <td width="168">' + str(align.get_number_of_variable_sites([pop])) + '</td>\n'
-                html_string += '                <td width="168">' + str(align.get_number_of_invariable_sites([pop])) + '</td>\n'
-                html_string += '                <td width="168">' + "{0:.4f}".format(align.get_proportion_of_variable_sites([pop])) + '</td>\n'
-                html_string += '                <td width="168">' + "{0:.4f}".format(align.get_pi([pop])) + '</td>\n'
-                html_string += '              </tr>\n'
-        html_string += '            </table>\n'
-        html_string += '          </td>\n'
-        html_string += '        </tr>\n'
-
-        # The between population differentiation section.
-        if config.pops != None and len(config.pops) > 1:
-            html_string += '        <tr class="smallSpaceUnder">\n'
-            html_string += '          <td style="font-size:30px; font-weight:bold">Between-population differentiation</td>\n'
-            html_string += '        </tr>\n'
-            html_string += '        <tr class="largeSpaceUnder">\n'
-            html_string += '          <td style="font-family:helvetica; font-size:12px">\n'
-            html_string += '            <table width="840" border="0" cellpadding="0" cellspacing="1">\n'
-            html_string += '              <tr>\n'
-            html_string += '                <td width="168" style="font-weight:bold">Population 1</td>\n'
-            html_string += '                <td width="168" style="font-weight:bold">Population 2</td>\n'
-            html_string += '                <td width="168" style="font-weight:bold"><a href="http://www.jstor.org/stable/2408641" data-toggle="tooltip" data-html="true" title="fixation index estimator<br/>(Weir and Cockerham 1984)">F<sub>ST</sub>&nbsp;&nbsp;</a></td>\n'
-            html_string += '                <td width="168" style="font-weight:bold"><a href="http://onlinelibrary.wiley.com/doi/10.1111/mec.12842/abstract" data-toggle="tooltip" data-html="true" title="between-species average number of pairwise differences<br/>(see Ruegg et al. 2014)">d<sub>XY</sub>&nbsp;&nbsp;</a></td>\n'
-            html_string += '                <td width="168" style="font-weight:bold"><a href="http://onlinelibrary.wiley.com/doi/10.1111/mec.12842/abstract" data-toggle="tooltip" data-html="true" title="density of fixed differences<br/>per base pair<br/>(see Ruegg et al. 2014)">d<sub>f</sub>&nbsp;&nbsp;</a></td>\n'
-            html_string += '              </tr>\n'
-            for x in range(0,len(config.pops)-1):
-                for y in range(x+1,len(config.pops)):
-                    html_string += '              <tr>\n'
-                    html_string += '                <td width="168" style="font-weight:bold">' + config.pops[x] + '</td>\n'
-                    html_string += '                <td width="168" style="font-weight:bold">' + config.pops[y] + '</td>\n'
-                    f_st = align.get_F_st([config.pops[x], config.pops[y]])
-                    if x == 0 and y == 1:
-                        html_string += '                <!-- First f_st: string start -->\n'
-                    if f_st is None:
-                        html_string += '                <td>NA</td>\n'
-                    else:
-                        html_string += '                <td width="168">' + "{0:.4f}".format(f_st) + '</td>\n'
-                    if x == 0 and y == 1:
-                        html_string += '                <!-- First f_st: string end -->\n'
-                    d_xy = align.get_d_xy([config.pops[x], config.pops[y]])
-                    if x == 0 and y == 1:
-                        html_string += '                <!-- First d_xy: string start -->\n'
-                    if d_xy is None:
-                        html_string += '                <td width="168">NA</td>\n'
-                    else:
-                        html_string += '                <td width="168">' + "{0:.4f}".format(d_xy) + '</td>\n'
-                    if x == 0 and y == 1:
-                        html_string += '                <!-- First d_xy: string end -->\n'
-                    d_f = align.get_d_f([config.pops[x], config.pops[y]])
-                    if x == 0 and y == 1:
-                        html_string += '                <!-- First d_f: string start -->\n'
-                    if d_f is None:
-                        html_string += '                <td width="168">NA</td>\n'
-                    else:
-                        html_string += '                <td width="168">' + "{0:.4f}".format(d_f) + '</td>\n'
-                    if x == 0 and y == 1:
-                        html_string += '                <!-- First d_f: string end -->\n'
-                    html_string += '              </tr>\n'
-            html_string += '            </table>\n'
-            html_string += '          </td>\n'
-            html_string += '        </tr>\n'
-
-        # The genealogical sorting index section.
-        if len(config.pops) > 0:
-            html_string += '        <tr class="smallSpaceUnder">\n'
-            html_string += '          <td style="font-size:30px; font-weight:bold">Genealogical sorting index</td>\n'
-            html_string += '        </tr>\n'
-            html_string += '        <tr class="largeSpaceUnder">\n'
-            html_string += '          <td style="font-family:helvetica; font-size:12px">\n'
-            html_string += '            <table width="840" border="0" cellpadding="0" cellspacing="1">\n'
-            html_string += '              <tr>\n'
-            html_string += '                <td width="168" style="font-weight:bold">Population</td>\n'
-            html_string += '                <td width="672" style="font-weight:bold"><a href="http://onlinelibrary.wiley.com/doi/10.1111/j.1558-5646.2008.00442.x/abstract" data-toggle="tooltip" data-html="true" title="genealogical sorting index<br/>(Cummings et al. 2008)">gsi&nbsp;&nbsp;</a></td>\n'
-            html_string += '              </tr>\n'
-            for x in range(0,len(config.pops)):
-                html_string += '              <tr>\n'
-                html_string += '                <td width="168" style="font-weight:bold">' + config.pops[x] + '</td>\n'
-                if x == 0:
-                    html_string += '                <!-- First gsi: string start -->\n'
-                elif x == 1:
-                    html_string += '                <!-- Second gsi: string start -->\n'
-                if gsis[x] == None:
-                    html_string += '                <td width="672">NA</td>\n'
-                else:
-                    html_string += '                <td width="672">' + "{0:.4f}".format(gsis[x]) + '</td>\n'
-                if x == 0:
-                    html_string += '                <!-- First gsi: string end -->\n'
-                elif x == 1:
-                    html_string += '                <!-- Second gsi: string end -->\n'
-                html_string += '              </tr>\n'
-            html_string += '            </table>\n'
-            html_string += '          </td>\n'
-            html_string += '        </tr>\n'
-
-        # Finalize the html string.
-        html_string += '      </table>\n'
-        html_string += '    </div>\n'
-        html_string += '  </body>\n'
-        html_string += '</html>\n'
-        html_string += ''
-        html_string += ''
-
-        return html_string
-
-    html_string = create_html_string()
-
     # Write the html string to STDOUT.
+    html_string = create_html_string(config, align, tree, gsis, svg_string)
     config.outfile.write(html_string)
