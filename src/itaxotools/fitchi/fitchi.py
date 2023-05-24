@@ -35,7 +35,8 @@ from scipy import special
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Align import MultipleSeqAlignment
-from typing import TextIO
+from typing import TextIO, NamedTuple, NewType
+
 
 ######################### networkx 2.0 Graph class source below #########################
 #
@@ -141,6 +142,14 @@ class Graph(object):
 ######################### networkx 2.0 Graph class source above #########################
 
 
+class Sequence(NamedTuple):
+    id: str
+    seq: str
+
+
+NewickString = NewType('NewickString', str)
+
+
 # The Tree class.
 class Tree(object):
 
@@ -152,9 +161,6 @@ class Tree(object):
         self.max_number_of_edges = 0
         self.is_positioned = False
         self.pops = []
-
-    def get_newick_string(self):
-        return self.newick_string
 
     def parse_newick_string(self, pops):
         if pops == None:
@@ -2666,85 +2672,86 @@ def parse_arguments() -> Configuration:
     return config
 
 
+def parse_nexus(infile: TextIO) -> tuple[list[Sequence], NewickString]:
+    # Assume the input is in nexus format. Maximally one tree string is read.
+    inlines = infile.readlines()
+    if inlines[0][0:6].lower() != '#nexus':
+        raise Exception("Unexpected file format!")
+
+    in_matrix = False
+    in_tree = False
+    sequences = []
+    for line in inlines:
+        clean_line = line.strip()
+        if "[" in clean_line and "]" in clean_line:
+            tmp = ""
+            in_comment = False
+            for letter in clean_line:
+                if letter == "[":
+                    in_comment = True
+                elif letter == "]":
+                    in_comment = False
+                elif in_comment == False:
+                    tmp += letter
+            clean_line = tmp
+        if clean_line.lower() == 'matrix':
+            in_matrix = True
+        elif clean_line == ';':
+            in_matrix = False
+            in_tree = False
+        elif "format" in clean_line.lower():
+            if "interleave" in clean_line.lower():
+                raise Exception("Could not parse the alignment (should be sequential nexus format, but the format specification says that it is interleaved)!")
+        elif in_matrix and clean_line != '':
+            line_ary = clean_line.split()
+            if len(line_ary) == 1:
+                raise Exception("Could not parse the alignment (should be sequential nexus format, but looks like it is interleaved)!")
+            elif len(line_ary) > 2:
+                raise Exception("Could not parse the alignment!")
+            else:
+                seq_string = line_ary[1].upper()
+            pattern = re.compile("^[a-zA-Z0-9_\.\-]+?$")
+            hit = pattern.search(line_ary[0])
+            if hit == None:
+                raise Exception("Taxon labels should include only 'A'-'Z', 'a'-'z', '0'-'9', '.', _', and '-'! Offending taxon label: " + line_ary[0] + ".")
+            sequences.append(Sequence(id=line_ary[0], seq=seq_string))
+
+        elif line.strip().lower() == 'begin trees;':
+            in_tree = True
+        elif line.strip().lower() == 'end;':
+            in_tree = False
+        elif in_tree and line.strip() != '':
+            tree_string_raw = line
+            tree_patterns = re.search('\(.+\)',tree_string_raw)
+            tree_string = tree_patterns.group(0)
+    if not sequences:
+        raise Exception("File could not be parsed!")
+    for sequence in sequences:
+        if sequence.id not in tree_string:
+            raise Exception("Record id " + sequence.id + " not found in tree string!")
+
+    return sequences, tree_string
+
+
+def cut_sequences(sequences: list[Sequence], start: int, end: int) -> list[Sequence]:
+    if end < 0:
+        end = None
+    return [Sequence(x.id, x.seq[start:end]) for x in sequences]
+
+
 def run():
     config = parse_arguments()
     random.seed(config.seed)
 
-    # Parse the input.
-    align = None
-    tree = None
-    inlines = config.infile.readlines()
-    if inlines[0][0:6].lower() == '#nexus':
-        # Assume the input is in nexus format. Maximally one tree string is read.
-        in_matrix = False
-        in_tree = False
-        records = []
-        for line in inlines:
-            clean_line = line.strip()
-            if "[" in clean_line and "]" in clean_line:
-                tmp = ""
-                in_comment = False
-                for letter in clean_line:
-                    if letter == "[":
-                        in_comment = True
-                    elif letter == "]":
-                        in_comment = False
-                    elif in_comment == False:
-                        tmp += letter
-                clean_line = tmp
-            if clean_line.lower() == 'matrix':
-                in_matrix = True
-            elif clean_line == ';':
-                in_matrix = False
-                in_tree = False
-            elif "format" in clean_line.lower():
-                if "interleave" in clean_line.lower():
-                    raise Exception("Could not parse the alignment (should be sequential nexus format, but the format specification says that it is interleaved)!")
-            elif in_matrix and clean_line != '':
-                line_ary = clean_line.split()
-                if len(line_ary) == 1:
-                    raise Exception("Could not parse the alignment (should be sequential nexus format, but looks like it is interleaved)!")
-                elif len(line_ary) > 2:
-                    raise Exception("Could not parse the alignment!")
-                else:
-                    seq_string = line_ary[1].upper()
-                pattern = re.compile("^[a-zA-Z0-9_\.\-]+?$")
-                hit = pattern.search(line_ary[0])
-                if hit == None:
-                    raise Exception("Taxon labels should include only 'A'-'Z', 'a'-'z', '0'-'9', '.', _', and '-'! Offending taxon label: " + line_ary[0] + ".")
-                if config.window_end_pos == -1:
-                    seq_string = seq_string[config.window_start_pos:]
-                else:
-                    seq_string = seq_string[config.window_start_pos:config.window_end_pos]
-                records.append(
-                    SeqRecord(
-                        Seq(seq_string),
-                            id = line_ary[0]))
-            elif line.strip().lower() == 'begin trees;':
-                in_tree = True
-            elif line.strip().lower() == 'end;':
-                in_tree = False
-            elif in_tree and line.strip() != '':
-                tree_string_raw = line
-                tree_patterns = re.search('\(.+\)',tree_string_raw)
-                tree_string = tree_patterns.group(0)
-                tree = Tree(tree_string)
-        if records == []:
-            raise Exception("File could not be parsed!")
-        else:
-            for record in records:
-                if record.id not in tree_string:
-                    raise Exception("Record id " + record.id + " not found in tree string!")
+    sequences, tree_string = parse_nexus(config.infile)
+    sequences = cut_sequences(sequences, config.window_start_pos, config.window_end_pos)
 
-        align = XMultipleSeqAlignment(records)
-        if config.haploid:
-            align.set_is_haploid(True)
-        else:
-            align.set_is_haploid(False)
-    else:
-        raise Exception("Unexpected file format!")
+    records = [SeqRecord(Seq(x.seq), id=x.id) for x in sequences]
+    align = XMultipleSeqAlignment(records)
+    align.set_is_haploid(config.haploid)
 
     # Parse the newick tree string.
+    tree = Tree(tree_string)
     tree.parse_newick_string(config.pops)
 
     # Assign sequences to terminal nodes.
