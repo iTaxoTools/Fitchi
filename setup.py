@@ -22,11 +22,14 @@ setup(
     ),
     python_requires='>=3.10.2, <4',
     install_requires=[
-        'scipy',
         'biopython',
-        'pygraphviz',
+        'scipy',
     ],
-    extras_require={},
+    extras_require={
+        'pygraphviz': [
+            'pygraphviz',
+        ],
+    },
     entry_points={
         'console_scripts': [
             'fitchi = itaxotools.fitchi.__main__:run',

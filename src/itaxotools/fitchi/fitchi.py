@@ -31,13 +31,19 @@ import os
 import re
 import math
 import scipy
-import pygraphviz
 from scipy import special
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Align import MultipleSeqAlignment
 from typing import TextIO, NamedTuple, NewType
 
+try:
+    import pygraphviz
+except ImportError:
+    class DummyModule:
+        def __getattr__(self, name):
+            raise Exception("Could not import 'pygraphviz', is it installed?")
+    pygraphviz = DummyModule()
 
 ######################### networkx 2.0 Graph class source below #########################
 #

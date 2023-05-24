@@ -1,8 +1,13 @@
 # Fitchi
+
 Haplotype genealogies based on Fitch distances.
 
-This is a Python package for the [Fitchi](https://github.com/mmatschiner/Fitchi) algorithm.
-It does not include network visualization or statistics.
+This is a Python package for [Fitchi](https://github.com/mmatschiner/Fitchi).
+
+### Dependencies
+
+Fitchi requires [scipy](https://pypi.org/project/scipy/) and [biopython](https://pypi.org/project/biopython/).
+If you want to use Fitchi for graph visualization, you must also [install pygraphviz](https://pygraphviz.github.io/documentation/stable/install.html).
 
 ### Citations
 
