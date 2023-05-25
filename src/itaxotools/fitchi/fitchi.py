@@ -26,7 +26,6 @@ import sys
 import argparse
 import textwrap
 import random
-import tempfile
 import os
 import re
 import math
@@ -3229,6 +3228,30 @@ def create_html_string(
     html_string += ''
 
     return html_string
+
+
+def compute_fitchi_tree(
+    sequences: dict[str, str],
+    classifications: dict[str, str],
+    newick_string: NewickString,
+    transversions_only: bool = False,
+    minimum_edge_length: int = 1,
+    minimum_node_size: int = 1,
+    seed: int | None = None,
+) -> Tree:
+
+    random.seed(seed)
+
+    pops = list(set(classifications.values()))
+    tree = Tree.from_newick_string(newick_string, pops)
+    tree.init_node_sequences(sequences)
+    tree.init_node_pops(classifications)
+    tree.reconstruct_ancestral_sequences()
+    tree.calculate_fitch_distances(transversions_only)
+    tree.assign_progeny_ids()
+    tree.reduce(minimum_edge_length, minimum_node_size)
+
+    return tree
 
 
 def run():
