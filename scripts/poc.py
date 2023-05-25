@@ -74,4 +74,4 @@ newick_string = '(((pop2_11,(pop2_2,pop2_5)),((((pop1_3,pop1_14),((pop2_6,pop2_8
 
 fitchi_tree = compute_fitchi_tree(sequences, classifications, newick_string)
 
-print(fitchi_tree)
+fitchi_tree.print()

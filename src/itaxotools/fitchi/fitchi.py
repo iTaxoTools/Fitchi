@@ -35,6 +35,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Align import MultipleSeqAlignment
 from typing import TextIO, NamedTuple, NewType
+from collections import Counter
 
 try:
     import pygraphviz
@@ -1429,6 +1430,41 @@ class Tree:
                 all_sorted = False
         return all_sorted
 
+    def get_root_node(self):
+        for node in self.nodes:
+            if node.is_root:
+                return node
+        return None
+
+    def get_node_dict(self):
+        return {node.id: node for node in self.nodes}
+
+    def get_edge_dict(self):
+        return {tuple(sorted(edge.node_ids)): edge for edge in self.edges}
+
+    def print(self):
+        root = self.get_root_node()
+        if not root:
+            raise Exception("Can't find root, can't print tree.")
+
+        node_dict = self.get_node_dict()
+        edge_dict = self.get_edge_dict()
+        self._print_node(root, node_dict, edge_dict)
+
+    def _print_node(self, node, node_dict, edge_dict, level=0):
+        id = node.id.removeprefix("internal")
+        pop_count = len(node.pops)
+        pops = dict(Counter(node.pops))
+        pop_string = ' + '.join(f'{v} \u00D7 {k}' for k, v in pops.items())
+        edge = edge_dict.get(tuple(sorted([node.id, node.parent_id])), None)
+        distance = edge.fitch_distance if edge else 0
+        distance_string = str(distance).center(5, '\u2500')
+        decoration = ' ' * 6 * (level - 1) + f"\u2514{distance_string}" if level else ''
+        print(f"{decoration}<{id}: {pop_count} = {pop_string}>")
+        children = [node_dict[id] for id in node.child_ids]
+        for child in children:
+            self._print_node(child, node_dict, edge_dict, level + 1)
+
 
 # The Node class.
 class Node:
@@ -1449,6 +1485,7 @@ class Node:
         self.per_pop_sizes = []
         self.progeny_ids = []
         self.distance_to_root = None
+        self.parent_id = None
         self.x = 'None'
         self.y = 'None'
 
