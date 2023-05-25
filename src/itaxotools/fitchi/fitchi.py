@@ -29,13 +29,25 @@ import random
 import os
 import re
 import math
-import scipy
-from scipy import special
-from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
-from Bio.Align import MultipleSeqAlignment
+
 from typing import TextIO, NamedTuple, NewType
 from collections import Counter
+
+import scipy
+
+try:
+    from Bio.Seq import Seq
+    from Bio.SeqRecord import SeqRecord
+    from Bio.Align import MultipleSeqAlignment
+except ImportError:
+    class DummyClass:
+        def __init__(self, *args, **kwargs):
+            raise Exception("Could not import 'biopython', is it installed?")
+        def __getattr__(self, name):
+            raise Exception("Could not import 'biopython', is it installed?")
+    Seq = DummyClass
+    SeqRecord = DummyClass
+    MultipleSeqAlignment = DummyClass
 
 try:
     import pygraphviz
@@ -498,8 +510,8 @@ class Tree:
             for node in self.nodes:
                 if node.get_id() in edge.get_node_ids():
                     seqs.append(node.get_sequences()[0])
-            seq1 = XSeq(seqs[0])
-            seq2 = XSeq(seqs[1])
+            seq1 = StrSeq(seqs[0])
+            seq2 = StrSeq(seqs[1])
             fitch_dist = seq1.get_distance_to(seq2, transversions_only)
             edge.set_fitch_distance(fitch_dist)
 
@@ -1869,7 +1881,11 @@ class Edge:
 
 # Expand the class Seq to include a distance measure method.
 class XSeq(Seq):
+    def get_distance_to(self, seq, transversions_only):
+        return StrSeq(str(self)).get_distance_to(str(seq), transversions_only)
 
+
+class StrSeq(str):
     def get_distance_to(self, seq, transversions_only):
         distance = 0
         if len(self) != len(seq):

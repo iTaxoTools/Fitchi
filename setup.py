@@ -22,12 +22,12 @@ setup(
     ),
     python_requires='>=3.10.2, <4',
     install_requires=[
-        'biopython',
         'scipy',
     ],
     extras_require={
-        'pygraphviz': [
+        'all': [
             'pygraphviz',
+            'biopython',
         ],
     },
     entry_points={
