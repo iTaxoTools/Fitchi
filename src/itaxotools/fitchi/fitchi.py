@@ -45,6 +45,9 @@ except ImportError:
             raise Exception("Could not import 'pygraphviz', is it installed?")
     pygraphviz = DummyModule()
 
+from .types import HaploNode
+
+
 ######################### networkx 2.0 Graph class source below #########################
 #
 # Class copied with modifications from networkx (https://networkx.github.io)
@@ -1442,28 +1445,31 @@ class Tree:
     def get_edge_dict(self):
         return {tuple(sorted(edge.node_ids)): edge for edge in self.edges}
 
-    def print(self):
+    def get_haplo_tree(self) -> HaploNode:
         root = self.get_root_node()
         if not root:
-            raise Exception("Can't find root, can't print tree.")
+            raise Exception("Can't find root.")
 
         node_dict = self.get_node_dict()
         edge_dict = self.get_edge_dict()
-        self._print_node(root, node_dict, edge_dict)
+        return self._get_haplo_node(root, node_dict, edge_dict)
 
-    def _print_node(self, node, node_dict, edge_dict, level=0):
+    def _get_haplo_node(self, node, node_dict, edge_dict):
         id = node.id.removeprefix("internal")
-        pop_count = len(node.pops)
-        pops = dict(Counter(node.pops))
-        pop_string = ' + '.join(f'{v} \u00D7 {k}' for k, v in pops.items())
-        edge = edge_dict.get(tuple(sorted([node.id, node.parent_id])), None)
-        distance = edge.fitch_distance if edge else 0
-        distance_string = str(distance).center(5, '\u2500')
-        decoration = ' ' * 6 * (level - 1) + f"\u2514{distance_string}" if level else ''
-        print(f"{decoration}<{id}: {pop_count} = {pop_string}>")
+
+        haplo_node = HaploNode(id)
+        haplo_node.add_pops(node.pops)
+
         children = [node_dict[id] for id in node.child_ids]
         for child in children:
-            self._print_node(child, node_dict, edge_dict, level + 1)
+            edge = edge_dict[tuple(sorted([node.id, child.id]))]
+            child_haplo_node = self._get_haplo_node(child, node_dict, edge_dict)
+            haplo_node.add_child(child_haplo_node, edge.fitch_distance)
+        return haplo_node
+
+    def print(self):
+        tree = self.get_haplo_tree()
+        tree.print()
 
 
 # The Node class.
@@ -3275,7 +3281,7 @@ def compute_fitchi_tree(
     minimum_edge_length: int = 1,
     minimum_node_size: int = 1,
     seed: int | None = None,
-) -> Tree:
+) -> HaploNode:
 
     random.seed(seed)
 
@@ -3288,7 +3294,7 @@ def compute_fitchi_tree(
     tree.assign_progeny_ids()
     tree.reduce(minimum_edge_length, minimum_node_size)
 
-    return tree
+    return tree.get_haplo_tree()
 
 
 def run():

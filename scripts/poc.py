@@ -72,6 +72,6 @@ classifications = {
 
 newick_string = '(((pop2_11,(pop2_2,pop2_5)),((((pop1_3,pop1_14),((pop2_6,pop2_8),(((pop2_7,(pop2_13,((pop2_3,pop2_10),(pop1_15,pop1_8)))),pop2_1),pop2_14))),(pop1_13,((pop1_4,(((pop1_11,pop1_7),pop1_12),pop1_6)),pop1_9))),(pop2_15,((pop2_4,(pop2_9,pop2_12)),(pop1_2,pop1_5))))),pop1_10,pop1_1)'
 
-fitchi_tree = compute_fitchi_tree(sequences, classifications, newick_string)
+haplo_tree = compute_fitchi_tree(sequences, classifications, newick_string)
 
-fitchi_tree.print()
+haplo_tree.print()
