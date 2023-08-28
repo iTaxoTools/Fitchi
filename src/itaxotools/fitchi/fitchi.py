@@ -194,7 +194,7 @@ class Tree:
         number_of_internal_nodes = 0
 
         # Remove comments from the tree string.
-        pattern = re.compile("\[.*?\]")
+        pattern = re.compile(r"\[.*?\]")
         hit = "placeholder"
         while hit != None:
             hit = pattern.search(tree.newick_string)
@@ -202,7 +202,7 @@ class Tree:
                 tree.newick_string = tree.newick_string.replace(hit.group(0),"")
 
         # Check whether a branch above the root is present, and if so, remove it.
-        if tree.newick_string[0:2] == "((" and tree.newick_string[-1] == ")" and tree.newick_string[-2] != ")":
+        if tree.newick_string.startswith("((") and tree.newick_string.endswith("))"):
             level = 0
             newick_string_tail_start_pos = 0
             newick_string_tail = ""
@@ -220,9 +220,9 @@ class Tree:
 
         # Parse the bifurcating part of the tree.
         if ":" in tree.newick_string:
-            pattern = re.compile("\(([a-zA-Z0-9_\.\-]+?):[\d\.Ee-]+?,([a-zA-Z0-9_\.\-]+?):[\d\.Ee-]+?\)")
+            pattern = re.compile(r"\(([a-zA-Z0-9_\.\-]+?):[\d\.Ee-]+?,([a-zA-Z0-9_\.\-]+?):[\d\.Ee-]+?\)")
         else:
-            pattern = re.compile("\(([a-zA-Z0-9_\.\-]+?),([a-zA-Z0-9_\.\-]+?)\)")
+            pattern = re.compile(r"\(([a-zA-Z0-9_\.\-]+?),([a-zA-Z0-9_\.\-]+?)\)")
         hit = "placeholder"
         while hit != None:
             hit = pattern.search(tree.newick_string)
@@ -238,13 +238,17 @@ class Tree:
 
                 tree.newick_string = tree.newick_string.replace(hit.group(0), internal_node_id)
 
+        # Remove extra parentheses around remaining root block
+        while tree.newick_string.startswith('((') and tree.newick_string.endswith('))'):
+            newick = newick[1:-1]
+
         # Parse the remaining string with three branches (if the tree is unrooted).
         if ":" in tree.newick_string:
-            pattern_unrooted = re.compile("^\(([a-zA-Z0-9_\.\-]+?):[\d\.Ee-]+?,([a-zA-Z0-9_\.\-]+?):[\d\.Ee-]+?,([a-zA-Z0-9_\.\-]+?):[\d\.Ee-]+?\)$")
+            pattern_unrooted = re.compile(r"^\(([a-zA-Z0-9_\.\-]+?):[\d\.Ee-]+?,([a-zA-Z0-9_\.\-]+?):[\d\.Ee-]+?,([a-zA-Z0-9_\.\-]+?):[\d\.Ee-]+?\)$")
         else:
-            pattern_unrooted = re.compile("^\(([a-zA-Z0-9_\.\-]+?),([a-zA-Z0-9_\.\-]+?),([a-zA-Z0-9_\.\-]+?)\)$")
+            pattern_unrooted = re.compile(r"^\(([a-zA-Z0-9_\.\-]+?),([a-zA-Z0-9_\.\-]+?),([a-zA-Z0-9_\.\-]+?)\)$")
         hit_unrooted = pattern_unrooted.search(tree.newick_string)
-        pattern_rooted = re.compile("^internalNode\d+X$")
+        pattern_rooted = re.compile(r"^internalNode\d+X$")
         hit_rooted = pattern_rooted.search(tree.newick_string)
         if hit_unrooted != None:
             number_of_internal_nodes += 1
@@ -2767,7 +2771,7 @@ def parse_nexus(infile: TextIO) -> tuple[list[Sequence], NewickString]:
                 raise Exception("Could not parse the alignment!")
             else:
                 seq_string = line_ary[1].upper()
-            pattern = re.compile("^[a-zA-Z0-9_\.\-]+?$")
+            pattern = re.compile(r"^[a-zA-Z0-9_\.\-]+?$")
             hit = pattern.search(line_ary[0])
             if hit == None:
                 raise Exception("Taxon labels should include only 'A'-'Z', 'a'-'z', '0'-'9', '.', _', and '-'! Offending taxon label: " + line_ary[0] + ".")
