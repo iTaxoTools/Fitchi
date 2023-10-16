@@ -1475,6 +1475,7 @@ class Tree:
 
         haplo_node = HaploNode(id)
         haplo_node.add_pops(node.pops)
+        haplo_node.add_members(set(node.get_record_ids()))
 
         children = [node_dict[id] for id in node.child_ids]
         for child in children:
