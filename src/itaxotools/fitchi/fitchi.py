@@ -169,6 +169,18 @@ class Sequence(NamedTuple):
     seq: str
 
 
+class IndexCounter:
+    def __init__(self, value=0):
+        self.value = value
+
+    def __iadd__(self, other):
+        self.value += other
+        return self
+
+    def __int__(self):
+        return self.value
+
+
 NewickString = NewType('NewickString', str)
 
 
@@ -1468,10 +1480,16 @@ class Tree:
 
         node_dict = self.get_node_dict()
         edge_dict = self.get_edge_dict()
-        return self._get_haplo_node(root, node_dict, edge_dict)
 
-    def _get_haplo_node(self, node, node_dict, edge_dict):
-        id = node.id.removeprefix("internal")
+        counter = IndexCounter(1)
+        digits = len(str(len(node_dict))) + 1
+        formatter = lambda index: 'Node' + str(index).zfill(digits)
+
+        return self._get_haplo_node(root, node_dict, edge_dict, formatter, counter)
+
+    def _get_haplo_node(self, node, node_dict, edge_dict, formatter, counter):
+        id = formatter(int(counter))
+        counter += 1
 
         haplo_node = HaploNode(id)
         haplo_node.add_pops(node.pops)
@@ -1480,7 +1498,7 @@ class Tree:
         children = [node_dict[id] for id in node.child_ids]
         for child in children:
             edge = edge_dict[tuple(sorted([node.id, child.id]))]
-            child_haplo_node = self._get_haplo_node(child, node_dict, edge_dict)
+            child_haplo_node = self._get_haplo_node(child, node_dict, edge_dict, formatter, counter)
             haplo_node.add_child(child_haplo_node, edge.fitch_distance)
         return haplo_node
 
