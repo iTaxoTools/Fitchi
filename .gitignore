@@ -25,3 +25,4 @@ Makefile
 *.sln
 
 *.html
+!examples/example.html
