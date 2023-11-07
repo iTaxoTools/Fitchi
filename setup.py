@@ -11,8 +11,8 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 setup(
     name='fitchi',
-    version='0.0.1',
-    description='A Python package for Fitchi',
+    version='1.2.0',
+    description='Haplotype genealogies based on Fitch distances',
     long_description=long_description,
     long_description_content_type='text/markdown',
     package_dir={'': 'src'},

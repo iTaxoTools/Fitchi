@@ -2629,7 +2629,7 @@ def parse_arguments() -> Configuration:
     parser.add_argument(
         '-v', '--version',
         action='version',
-        version='%(prog)s 1.1.4')
+        version='%(prog)s 1.2.0')
     parser.add_argument(
         '-p', '--populations',
         nargs='*',
