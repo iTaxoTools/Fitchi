@@ -32,7 +32,7 @@ The original command-line tool is included as part of the installation. It produ
 Note that you will need *all* dependencies in order to run Fitchi this way:
 
 ```
-fitchi examples/example.nex examples/example.html  -m 3 -p pop1 pop2
+fitchi examples/example.nex examples/example.html -m 3 -p pop1 pop2
 start examples/example.html  # browse results on Windows
 ```
 
@@ -46,7 +46,7 @@ Fitchi requires [scipy](https://pypi.org/project/scipy/).
 Extra statistics require [biopython](https://pypi.org/project/biopython/).
 Visualization requires [pygraphviz](https://pypi.org/project/pygraphviz/).
 
-To install pygraphviz, please follow the [instructions](https://pygraphviz.github.io/documentation/stable/install.html) from the pygraphviz documentation.
+To install pygraphviz, please follow [these](https://pygraphviz.github.io/documentation/stable/install.html) instructions from the pygraphviz documentation.
 For example, to install pygraphviz on Windows, first install [Graphviz](https://graphviz.org/download/) to the default location, then execute the following command in PowerShell:
 ```
 pip install pygraphviz --config-setting build_ext^="^--include-dir=C:\Program Files\Graphviz\include" --config-setting build_ext^="^--library-dir=C:\Program Files\Graphviz\lib"
