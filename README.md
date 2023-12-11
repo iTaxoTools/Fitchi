@@ -1,12 +1,21 @@
 # Fitchi
 
+[![PyPI - Version](https://img.shields.io/pypi/v/itaxotools-fitchi?color=tomato)](
+    https://pypi.org/project/itaxotools-fitchi)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/itaxotools-fitchi)](
+    https://pypi.org/project/itaxotools-fitchi)
+[![GitHub - Tests](https://img.shields.io/github/actions/workflow/status/iTaxoTools/Fitchi/test.yml?label=tests)](
+    https://github.com/iTaxoTools/Fitchi/actions/workflows/test.yml)
+
 Haplotype genealogies based on Fitch distances.
 
 This is a Python package for [Fitchi](https://github.com/mmatschiner/Fitchi). For more information on the original, see [here](https://evoinformatics.group/fitchi.html).
 
-[![Genealogy](images/genealogy.png)](https://itaxotools.github.io/Fitchi/examples/example.html)
+[![Genealogy](https://raw.githubusercontent.com/iTaxoTools/Fitchi/v1.2.0/images/genealogy.png)](
+    https://itaxotools.github.io/Fitchi/examples/example.html)
 
-[*Click for comprehensive output example*](https://itaxotools.github.io/Fitchi/examples/example.html)
+[*Click for a comprehensive output example*](
+    https://itaxotools.github.io/Fitchi/examples/example.html)
 
 ## Installation
 
