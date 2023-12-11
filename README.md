@@ -24,6 +24,7 @@ You will need *all* dependencies in order to run Fitchi this way:
 
 ```
 fitchi examples/example.nex examples/example.html  -m 3 -p pop1 pop2
+start examples/example.html  # browse results on Windows
 ```
 
 You may also invoke Fitchi from Python using `compute_fitchi_tree()`. This returns a tree in the form of `HaploNode` objects, which can be used for downstream analysis or visualization. Only scipy is required in this case.
