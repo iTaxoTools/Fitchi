@@ -30,7 +30,6 @@ dependencies = [
 dev = [
     "setuptools-scm",
     "pre-commit",
-    "ruff",
 ]
 all = [
     "pygraphviz",
